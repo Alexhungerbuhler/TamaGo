@@ -1,6 +1,10 @@
 import express from "express";
 import createError from "http-errors";
 import logger from "morgan";
+import mongoose from "mongoose";
+
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/TamaGo');
+
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";

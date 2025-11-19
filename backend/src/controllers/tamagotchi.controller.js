@@ -1,8 +1,29 @@
-const tamagotchiService = require('../services/tamagotchi.service').default;
+const tamagotchiService = require('../services/tamagotchi.service');
 
 async function getAll(req, res, next) {
   try {
-    res.json(await tamagotchiService.getAll());
+    // build filter from query (status, geolocation, other filters)
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    // exemple geolocation: ?lat=..&lng=..&radius=..
+    if (req.query.lat && req.query.lng && req.query.radius) {
+      filter.location = {
+        $geoWithin: {
+          $centerSphere: [
+            [parseFloat(req.query.lng), parseFloat(req.query.lat)],
+            parseFloat(req.query.radius) / 6378.1, // radius km -> radians
+          ],
+        },
+      };
+    }
+
+    const options = {};
+    if (req.query.page) options.page = req.query.page;
+    if (req.query.limit) options.limit = req.query.limit;
+    if (req.query.sort) options.sort = JSON.parse(req.query.sort); // optional: ?sort={"level":1}
+
+    const result = await tamagotchiService.getAll(filter, options);
+    res.json(result);
   } catch (err) {
     next(err);
   }

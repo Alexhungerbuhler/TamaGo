@@ -2,13 +2,14 @@
 
 import createDebugger from "debug";
 import http from "node:http";
+import * as config from "../../config.js";
 
 import app from "../app.js";
 
 const debug = createDebugger('tama-go:server')
 
 // Get port from environment and store in Express
-const port = normalizePort(process.env.PORT || "3000");
+const port = normalizePort(config.port);
 app.set("port", port);
 
 // Create HTTP server

@@ -1,4 +1,4 @@
-const Tamagotchi = require('../models/Tamagotchi');
+import Tamagotchi, { find, countDocuments, findById, findByIdAndUpdate, findByIdAndDelete } from '../models/Tamagotchi';
 
 /**
  * Get all tamagotchis.
@@ -13,14 +13,14 @@ async function getAll(filter = {}, options = {}) {
 
   // No pagination requested -> keep old behavior (array)
   if (!page || !limit) {
-    return Tamagotchi.find(filter).sort(sort);
+    return find(filter).sort(sort);
   }
 
   const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
-    Tamagotchi.find(filter).sort(sort).skip(skip).limit(limit),
-    Tamagotchi.countDocuments(filter),
+    find(filter).sort(sort).skip(skip).limit(limit),
+    countDocuments(filter),
   ]);
 
   const pages = Math.max(1, Math.ceil(total / limit));
@@ -29,7 +29,7 @@ async function getAll(filter = {}, options = {}) {
 }
 
 async function getById(id) {
-  return Tamagotchi.findById(id);
+  return findById(id);
 }
 
 async function create(data) {
@@ -37,11 +37,11 @@ async function create(data) {
 }
 
 async function update(id, data) {
-  return Tamagotchi.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+  return findByIdAndUpdate(id, data, { new: true, runValidators: true });
 }
 
 async function remove(id) {
-  return Tamagotchi.findByIdAndDelete(id);
+  return findByIdAndDelete(id);
 }
 
-module.exports = { getAll, getById, create, update, remove };
+export default { getAll, getById, create, update, remove };

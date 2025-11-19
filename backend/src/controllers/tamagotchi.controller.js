@@ -1,4 +1,4 @@
-const tamagotchiService = require('../services/tamagotchi.service');
+const tamagotchiService = require('../services/tamagotchi.service').default;
 
 async function getAll(req, res, next) {
   try {

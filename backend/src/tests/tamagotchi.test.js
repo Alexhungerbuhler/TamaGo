@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Tamagotchi = require('../models/Tamagotchi');
-const tamagotchiService = require('../services/tamagotchi.service');
+const tamagotchiService = require('../services/tamagotchi.service').default;
 
 beforeEach(async () => {
   // clear collection before each test

@@ -3,11 +3,11 @@ import createError from "http-errors";
 import logger from "morgan";
 import mongoose from "mongoose";
 
-import * as config from "../config.js";
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/TamaGo');
+
+
 import indexRouter from "./routes/index.routes.js";
 import usersRouter from "./routes/users.routes.js";
-
-mongoose.connect(config.databaseUrl);
 
 const app = express();
 

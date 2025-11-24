@@ -1,19 +1,38 @@
+
 import express from "express";
 import createError from "http-errors";
 import logger from "morgan";
 import mongoose from "mongoose";
 
-mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/TamaGo');
-
-
+import * as config from "../config.js";
 import indexRouter from "./routes/index.routes.js";
 import usersRouter from "./routes/users.routes.js";
+
+mongoose
+  .connect(config.databaseUrl)
+  .then(async () => {
+    if (process.env.NODE_ENV !== "test") {
+      console.log("Mongoose connected to", mongoose.connection.name);
+    }
+  })
+  .catch((err) => {
+    console.error("Unable to connect to MongoDB:", err);
+  });
 
 const app = express();
 
 if (process.env.NODE_ENV !== "test") {
   app.use(logger("dev"));
 }
+
+mongoose.connection.on("error", (err) => {
+  console.error("Mongoose connection error:", err);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.log("Mongoose disconnected");
+});
+
 
 app
   .use(express.json())

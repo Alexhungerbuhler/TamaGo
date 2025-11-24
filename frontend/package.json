@@ -8,6 +8,12 @@
     "preview": "vite preview",
     "test": "vitest"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "axios": "^1.13.2",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4"
+  }
 }

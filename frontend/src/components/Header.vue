@@ -29,14 +29,14 @@ function navigate(view) {
     </div>
     <nav>
       <button
-        v-if="!props.isAuthenticated"
+        v-if="!isAuthenticated"
         class="ghost"
         @click="navigate('login')"
       >
         Login
       </button>
       <button
-        v-if="!props.isAuthenticated"
+        v-if="!isAuthenticated"
         class="primary"
         @click="navigate('register')"
       >

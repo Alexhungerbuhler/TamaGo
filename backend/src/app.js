@@ -3,17 +3,21 @@ import createError from "http-errors";
 import logger from "morgan";
 import mongoose from "mongoose";
 
-mongoose.connect(process.env.DATABASE_URL || "mongodb://localhost/TamaGo");
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://localhost/TamaGo');
+
 
 import indexRouter from "./routes/index.routes.js";
 import usersRouter from "./routes/users.routes.js";
 
-
 const app = express();
 
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+if (process.env.NODE_ENV !== "test") {
+  app.use(logger("dev"));
+}
+
+app
+  .use(express.json())
+  .use(express.urlencoded({ extended: false }));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
@@ -25,6 +29,8 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
+  console.warn(err);
+
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get("env") === "development" ? err : {};
@@ -35,4 +41,3 @@ app.use(function (err, req, res, next) {
 });
 
 export default app;
-

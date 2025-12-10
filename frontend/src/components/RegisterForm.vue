@@ -2,7 +2,7 @@
 import { reactive, ref } from "vue";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5173";
 
 const emit = defineEmits(["register-success", "navigate-login"]);
 

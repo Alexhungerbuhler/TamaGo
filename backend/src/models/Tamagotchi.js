@@ -1,22 +1,31 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const TamagotchiSchema = new mongoose.Schema({
-  name: String,
-  level: Number,
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point',
-    },
-    coordinates: {
-      type: [Number],
-      default: [0, 0],
+const { Schema } = mongoose;
+
+const TamagotchiSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    owner: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    level: { type: Number, default: 1 },
+    hunger: { type: Number, default: 100, min: 0, max: 100 },
+    hygiene: { type: Number, default: 100, min: 0, max: 100 },
+    energy: { type: Number, default: 100, min: 0, max: 100 },
+    fun: { type: Number, default: 100, min: 0, max: 100 },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0], // [lng, lat]
+      },
     },
   },
-}, { timestamps: true });
+  { timestamps: true },
+);
 
-// create 2dsphere index for geospatial queries
-TamagotchiSchema.index({ location: '2dsphere' });
+TamagotchiSchema.index({ location: "2dsphere" });
 
-module.exports = mongoose.model('Tamagotchi', TamagotchiSchema);
+export default mongoose.model("Tamagotchi", TamagotchiSchema);

@@ -13,8 +13,17 @@ import {
   sleepPet,
   toiletPet,
 } from "../api/pets.js";
+import { getGlobalStats, getUserStats } from "../api/stats.js";
 import { manualTick } from "../api/tick.js";
+import {
+  uploadAvatar,
+  deleteAvatar,
+  uploadPetImage,
+  deletePetImage,
+} from "../api/uploads.js";
 import { getWorldMap } from "../api/world.js";
+import { authenticate, optionalAuthenticate } from "../utils/jwt.js";
+import { upload } from "../utils/uploader.js";
 
 const router = express.Router();
 
@@ -26,25 +35,34 @@ router.post("/auth/register", register);
 router.post("/auth/login", login);
 router.post("/auth/logout", logout);
 
-// Users (placeholder for future user profile endpoints)
-// e.g., router.get("/users/:id", getUserProfile)
+// Users (uploads)
+router.post("/users/avatar", authenticate, upload.single("avatar"), uploadAvatar);
+router.delete("/users/avatar", authenticate, deleteAvatar);
 
 // Pets (core resource)
-router.get("/pets", listPets);           // GET /api/pets?userId=
-router.post("/pets", createPet);         // POST /api/pets
-router.get("/pets/:id", getPet);         // GET /api/pets/:id
-router.delete("/pets/:id", deletePet);   // DELETE /api/pets/:id
+router.get("/pets", optionalAuthenticate, listPets);           // GET /api/pets?userId=&page=&limit=
+router.post("/pets", authenticate, createPet);                 // POST /api/pets (protected)
+router.get("/pets/:id", getPet);                               // GET /api/pets/:id
+router.delete("/pets/:id", authenticate, deletePet);           // DELETE /api/pets/:id (protected)
 
-// Pet actions (stat updates)
-router.post("/pets/:id/eat", feedPet);
-router.post("/pets/:id/toilet", toiletPet);
-router.post("/pets/:id/sleep", sleepPet);
-router.post("/pets/:id/play", playPet);
-router.post("/pets/:id/move", movePet);
+// Pet actions (stat updates - all protected)
+router.post("/pets/:id/eat", authenticate, feedPet);
+router.post("/pets/:id/toilet", authenticate, toiletPet);
+router.post("/pets/:id/sleep", authenticate, sleepPet);
+router.post("/pets/:id/play", authenticate, playPet);
+router.post("/pets/:id/move", authenticate, movePet);
 router.get("/pets/:id/stats", getPetStats);
+
+// Pet uploads (images)
+router.post("/pets/:id/image", authenticate, upload.single("image"), uploadPetImage);
+router.delete("/pets/:id/image", authenticate, deletePetImage);
 
 // World / map
 router.get("/world/map", getWorldMap);
+
+// Statistics (aggregation endpoints)
+router.get("/stats", getGlobalStats);                          // GET /api/stats (global statistics)
+router.get("/stats/users/:userId", authenticate, getUserStats); // GET /api/stats/users/:userId (user statistics)
 
 // Tick system (manual trigger)
 router.post("/tick", manualTick);

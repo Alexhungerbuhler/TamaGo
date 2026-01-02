@@ -11,6 +11,8 @@ const TamagotchiSchema = new Schema(
     hygiene: { type: Number, default: 100, min: 0, max: 100 },
     energy: { type: Number, default: 100, min: 0, max: 100 },
     fun: { type: Number, default: 100, min: 0, max: 100 },
+    imageUrl: { type: String },
+    cloudinaryPublicId: { type: String },
     location: {
       type: {
         type: String,

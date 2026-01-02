@@ -1,4 +1,3 @@
-import { v2 as cloudinary } from "cloudinary";
 import * as dotenv from "dotenv";
 
 dotenv.config();
@@ -8,12 +7,9 @@ export const databaseUrl =
   process.env.DATABASE_URL || "mongodb://localhost/tama-go";
 export const port = process.env.PORT || 3000;
 export const secretKey = process.env.SECRET_KEY;
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+export const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+export const cloudinaryApiKey = process.env.CLOUDINARY_API_KEY;
+export const cloudinaryApiSecret = process.env.CLOUDINARY_API_SECRET;
 
 if (!secretKey) {
   throw new Error("SECRET_KEY environment variable is not set.");

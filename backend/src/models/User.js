@@ -6,6 +6,7 @@ const userSchema = new Schema({
   name: String,
   passwordHash: String,
   avatarUrl: String,
+  cloudinaryPublicId: String, // Pour supprimer l'image de Cloudinary
 });
 
 userSchema.set("toJSON", {

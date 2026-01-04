@@ -28,6 +28,13 @@ function navigate(view) {
     </div>
     <nav>
       <button
+        class="ghost"
+        @click="navigate('test-api')"
+        title="Test API"
+      >
+        🧪 Test API
+      </button>
+      <button
         v-if="!isAuthenticated"
         class="ghost"
         @click="navigate('login')"

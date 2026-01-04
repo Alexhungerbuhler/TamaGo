@@ -2,6 +2,7 @@
 import express from "express";
 import logger from "morgan";
 import mongoose from "mongoose";
+import cors from "cors";
 
 import * as config from "../config.js";
 import apiRouter from "./routes/api.js";
@@ -31,6 +32,11 @@ mongoose.connection.on("disconnected", () => {
   console.log("Mongoose disconnected");
 });
 
+// Configuration CORS
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true
+}));
 
 app
   .use(express.json())

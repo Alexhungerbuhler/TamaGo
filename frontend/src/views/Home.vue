@@ -32,6 +32,10 @@ function handleNavigate(target) {
     router.push('/register');
   } else if (target === 'login') {
     router.push('/login');
+  } else if (target === 'test-api') {
+    router.push('/test-api');
+  } else if (target === 'home') {
+    router.push('/');
   }
 }
 </script>

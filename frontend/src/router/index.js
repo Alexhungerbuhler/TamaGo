@@ -6,49 +6,16 @@ import TamagotchiList from '../views/TamagotchiList.vue';
 import TamagotchiDetail from '../views/TamagotchiDetail.vue';
 import Profile from '../views/Profile.vue';
 import Register from '../views/Register.vue';
-import NotFound from '../views/NotFound.vue';
+
+import ApiTestPanel from '../components/ApiTestPanel.vue';
 
 const routes = [
-  { 
-    path: '/', 
-    name: 'Home', 
-    component: Home 
-  },
-  { 
-    path: '/login', 
-    name: 'Login', 
-    component: Login,
-    meta: { requiresGuest: true } // Accessible seulement si NON connecté
-  },
-  { 
-    path: '/register', 
-    name: 'Register', 
-    component: Register,
-    meta: { requiresGuest: true } // Accessible seulement si NON connecté
-  },
-  { 
-    path: '/tamagotchis', 
-    name: 'TamagotchiList', 
-    component: TamagotchiList,
-    meta: { requiresAuth: true } // Nécessite authentification
-  },
-  { 
-    path: '/tamagotchis/:id', 
-    name: 'TamagotchiDetail', 
-    component: TamagotchiDetail,
-    meta: { requiresAuth: true } // Nécessite authentification
-  },
-  { 
-    path: '/profile', 
-    name: 'Profile', 
-    component: Profile,
-    meta: { requiresAuth: true } // Nécessite authentification
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: NotFound
-  }
+  { path: '/', name: 'Home', component: Home },
+  { path: '/login', name: 'Login', component: Login },
+  { path: '/register', name: 'Register', component: Register },
+  { path: '/tamagotchis', name: 'TamagotchiList', component: TamagotchiList },
+  { path: '/tamagotchis/:id', name: 'TamagotchiDetail', component: TamagotchiDetail },
+  { path: '/profile', name: 'Profile', component: Profile }
 ];
 
 const router = createRouter({

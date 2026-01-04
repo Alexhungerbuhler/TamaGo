@@ -1,4 +1,4 @@
-<template>
+git pull origin<template>
   <router-view />
 </template>
 

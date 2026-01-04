@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { authService } from '../services/api';
 
 const TOKEN_KEY = 'tamago_auth_token';
 const USER_KEY = 'tamago_user';
@@ -39,22 +40,8 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-      
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, password })
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.message || 'Identifiants invalides');
-      }
-
-      const data = await response.json();
+      const response = await authService.login(name, password);
+      const data = response.data;
       
       // Stockage du token et des données utilisateur
       setAuth(data.token, { name, id: data.userId || data.user?.id });
@@ -73,22 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null;
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-      
-      const response = await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, password })
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.message || 'Erreur lors de l\'inscription');
-      }
-
-      const data = await response.json();
+      const response = await authService.register(name, password);
+      const data = response.data;
       
       // Auto-login après inscription
       if (data.token) {
@@ -104,9 +77,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() {
-    clearAuth();
-    error.value = null;
+  async function logout() {
+    try {
+      await authService.logout();
+    } catch (err) {
+      console.error('Erreur lors de la déconnexion:', err);
+    } finally {
+      clearAuth();
+      error.value = null;
+    }
   }
 
   // Vérification du token au démarrage

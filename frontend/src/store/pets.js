@@ -1,8 +1,12 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { petsService } from '../services/api';
+import wsService from '../services/websocket';
+import { useNotificationsStore } from './notifications';
 
 export const usePetsStore = defineStore('pets', () => {
+  const notificationsStore = useNotificationsStore();
+  
   // State
   const pets = ref([]);
   const currentPet = ref(null);
@@ -14,6 +18,67 @@ export const usePetsStore = defineStore('pets', () => {
     total: 0,
     hasMore: false
   });
+
+  // WebSocket listeners
+  let unsubscribeUpdate;
+  let unsubscribeAlert;
+  let unsubscribeCritical;
+
+  // Initialiser les écouteurs WebSocket
+  function initWebSocketListeners() {
+    // Mise à jour des stats d'un pet
+    unsubscribeUpdate = wsService.on('pet:updated', (data) => {
+      updatePetStats(data.petId, data.stats);
+    });
+
+    // Alertes
+    unsubscribeAlert = wsService.on('pet:alert', (data) => {
+      notificationsStore.addNotification({
+        title: `⚠️ ${data.name}`,
+        message: data.message,
+        level: 'warning',
+        type: data.type,
+        petId: data.petId
+      });
+    });
+
+    unsubscribeCritical = wsService.on('pet:critical', (data) => {
+      notificationsStore.addNotification({
+        title: `🚨 ${data.name}`,
+        message: data.message,
+        level: 'critical',
+        type: 'health',
+        petId: data.petId
+      });
+    });
+  }
+
+  // Nettoyer les écouteurs
+  function cleanupWebSocketListeners() {
+    if (unsubscribeUpdate) unsubscribeUpdate();
+    if (unsubscribeAlert) unsubscribeAlert();
+    if (unsubscribeCritical) unsubscribeCritical();
+  }
+
+  // Mettre à jour les stats d'un pet
+  function updatePetStats(petId, stats) {
+    // Mettre à jour dans la liste
+    const index = pets.value.findIndex(p => p._id === petId || p.id === petId);
+    if (index !== -1) {
+      pets.value[index] = {
+        ...pets.value[index],
+        ...stats
+      };
+    }
+
+    // Mettre à jour currentPet si c'est lui
+    if (currentPet.value?._id === petId || currentPet.value?.id === petId) {
+      currentPet.value = {
+        ...currentPet.value,
+        ...stats
+      };
+    }
+  }
 
   // Getters
   const petsList = computed(() => pets.value);
@@ -274,6 +339,9 @@ export const usePetsStore = defineStore('pets', () => {
     error.value = null;
   }
 
+  // Initialiser les écouteurs WebSocket au démarrage
+  initWebSocketListeners();
+
   return {
     // State
     pets,
@@ -301,6 +369,10 @@ export const usePetsStore = defineStore('pets', () => {
     uploadPetImage,
     deletePetImage,
     setPage,
-    clearError
+    clearError,
+    
+    // WebSocket
+    initWebSocketListeners,
+    cleanupWebSocketListeners
   };
 });

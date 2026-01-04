@@ -1,4 +1,5 @@
 import Tamagotchi from "../models/Tamagotchi.js";
+import { emitToUser, emitToAll } from "../websocket.js";
 
 const MAX_STAT = 100;
 const MIN_STAT = 0;
@@ -150,7 +151,25 @@ async function updateStats(petId, userId, updater) {
   pet.hygiene = clamp(pet.hygiene);
   pet.energy = clamp(pet.energy);
   pet.fun = clamp(pet.fun);
-  return pet.save();
+  
+  const savedPet = await pet.save();
+  
+  // Émettre un événement WebSocket pour notifier le propriétaire
+  if (userId) {
+    emitToUser(userId.toString(), 'pet:updated', {
+      petId: savedPet._id,
+      stats: {
+        hunger: savedPet.hunger,
+        hygiene: savedPet.hygiene,
+        energy: savedPet.energy,
+        fun: savedPet.fun,
+        health: savedPet.health,
+        happiness: savedPet.happiness
+      }
+    });
+  }
+  
+  return savedPet;
 }
 
 export async function feedPet(req, res, next) {

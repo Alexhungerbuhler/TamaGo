@@ -5,6 +5,7 @@ import http from "node:http";
 import * as config from "../../config.js";
 
 import app from "../app.js";
+import { initializeWebSocket } from "../websocket.js";
 
 const debug = createDebugger('tama-go:server')
 
@@ -14,6 +15,9 @@ app.set("port", port);
 
 // Create HTTP server
 const httpServer = http.createServer(app);
+
+// Initialize WebSocket
+initializeWebSocket(httpServer);
 
 // Listen on provided port, on all network interfaces
 httpServer.listen(port);

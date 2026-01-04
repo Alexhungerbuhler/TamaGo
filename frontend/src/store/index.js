@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authService } from '../services/api';
+import wsService from '../services/websocket';
 
 const TOKEN_KEY = 'tamago_auth_token';
 const USER_KEY = 'tamago_user';
@@ -46,6 +47,9 @@ export const useAuthStore = defineStore('auth', () => {
       // Stockage du token et des données utilisateur
       setAuth(data.token, { name, id: data.userId || data.user?.id });
       
+      // Connexion WebSocket
+      wsService.connect(data.token);
+      
       return data;
     } catch (err) {
       error.value = err.message || 'Erreur lors de la connexion';
@@ -83,6 +87,8 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       console.error('Erreur lors de la déconnexion:', err);
     } finally {
+      // Déconnexion WebSocket
+      wsService.disconnect();
       clearAuth();
       error.value = null;
     }
@@ -94,6 +100,9 @@ export const useAuthStore = defineStore('auth', () => {
     const savedUser = localStorage.getItem(USER_KEY);
     
     if (savedToken && savedUser) {
+      
+      // Reconnexion WebSocket automatique
+      wsService.connect(savedToken);
       token.value = savedToken;
       user.value = JSON.parse(savedUser);
     }

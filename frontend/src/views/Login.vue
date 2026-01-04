@@ -9,15 +9,17 @@
 <script setup>
 import Header from '../components/Header.vue'
 import TheLogin from '../components/TheLogin.vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../store';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 function onLoginSuccess() {
-  // Le store gère déjà tout (token + localStorage)
-  router.push('/');
+  // Redirection vers la page d'origine ou vers home
+  const redirectPath = route.query.redirect || '/';
+  router.push(redirectPath);
 }
 
 function handleNavigate(target) {

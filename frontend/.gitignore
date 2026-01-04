@@ -1,3 +1,5 @@
 node_modules
 .env
 dist
+PHASE1_COMPLETE.md
+PHASE3_COMPLETE.md

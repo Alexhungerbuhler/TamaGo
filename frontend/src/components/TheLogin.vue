@@ -1,10 +1,13 @@
 <script setup>
 import { reactive, computed } from "vue";
 import { useAuthStore } from '../store';
+import { useFormValidation } from '../composables/useFormValidation';
+import { loginSchema } from '../utils/validation';
 
 const emit = defineEmits(["login-success"]);
 
 const authStore = useAuthStore();
+const { errors, touchField, validate, shouldShowError, getError, reset } = useFormValidation(loginSchema);
 
 const form = reactive({
   name: "",
@@ -12,11 +15,22 @@ const form = reactive({
 });
 
 const loading = computed(() => authStore.loading);
-const error = computed(() => authStore.error);
+const serverError = computed(() => authStore.error);
+
+// Validation en temps réel à la perte de focus
+function handleBlur(fieldName) {
+  touchField(fieldName);
+  const { validateSingleField } = useFormValidation(loginSchema);
+  validateSingleField(fieldName, form[fieldName]);
+}
 
 async function handleSubmit() {
-  if (!form.name || !form.password) {
-    authStore.error = "Merci d'indiquer votre nom et votre mot de passe.";
+  // Marquer tous les champs comme touchés
+  touchField('name');
+  touchField('password');
+
+  // Valider le formulaire
+  if (!validate(form)) {
     return;
   }
 
@@ -24,6 +38,7 @@ async function handleSubmit() {
     await authStore.login(form.name, form.password);
     emit("login-success");
     form.password = "";
+    reset();
   } catch (err) {
     console.error('Login failed:', err);
   }
@@ -36,27 +51,42 @@ async function handleSubmit() {
     <p class="subtitle">Connecte-toi à ton compte TamaGo.</p>
 
     <form class="form" @submit.prevent="handleSubmit">
-      <label>
-        Nom d'utilisateur
-        <input
-          v-model.trim="form.name"
-          type="text"
-          placeholder="ex: admin"
-          autocomplete="username"
-        />
-      </label>
+      <div class="form-field">
+        <label>
+          Nom d'utilisateur
+          <input
+            v-model.trim="form.name"
+            type="text"
+            placeholder="ex: admin"
+            autocomplete="username"
+            :class="{ 'input-error': shouldShowError('name') }"
+            @blur="handleBlur('name')"
+          />
+        </label>
+        <p v-if="shouldShowError('name')" class="field-error">
+          {{ getError('name') }}
+        </p>
+      </div>
 
-      <label>
-        Mot de passe
-        <input
-          v-model="form.password"
-          type="password"
-          placeholder="••••••••"
-          autocomplete="current-password"
-        />
-      </label>
+      <div class="form-field">
+        <label>
+          Mot de passe
+          <input
+            v-model="form.password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            :class="{ 'input-error': shouldShowError('password') }"
+            @blur="handleBlur('password')"
+          />
+        </label>
+        <p v-if="shouldShowError('password')" class="field-error">
+          {{ getError('password') }}
+        </p>
+      </div>
 
-      <p v-if="error" class="error">{{ error }}</p>
+      <!-- Erreur serveur -->
+      <p v-if="serverError" class="error">{{ serverError }}</p>
 
       <button type="submit" :disabled="loading">
         {{ loading ? "Connexion..." : "Se connecter" }}
@@ -93,6 +123,12 @@ h2 {
   gap: 1rem;
 }
 
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 label {
   display: flex;
   flex-direction: column;
@@ -112,6 +148,14 @@ input {
 input:focus {
   outline: none;
   border-color: #3b82f6;
+}
+
+input.input-error {
+  border-color: #ef4444;
+}
+
+input.input-error:focus {
+  border-color: #dc2626;
 }
 
 button {
@@ -135,9 +179,31 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.error {
+.field-error {
   color: #ef4444;
   margin: 0;
   font-size: 0.875rem;
+  animation: slideDown 0.2s ease;
+}
+
+.error {
+  color: #ef4444;
+  background: #fee2e2;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin: 0;
+  font-size: 0.875rem;
+  border-left: 3px solid #ef4444;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -34,6 +34,10 @@ function handleNavigate(target) {
     router.push('/login');
   } else if (target === 'test-api') {
     router.push('/test-api');
+  } else if (target === 'tamagotchis') {
+    router.push('/tamagotchis');
+  } else if (target === 'map') {
+    router.push('/map');
   } else if (target === 'home') {
     router.push('/');
   }

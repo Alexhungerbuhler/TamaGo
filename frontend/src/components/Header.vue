@@ -28,6 +28,22 @@ function navigate(view) {
     </div>
     <nav>
       <button
+        v-if="isAuthenticated"
+        class="ghost"
+        @click="navigate('tamagotchis')"
+        title="Mes Tamagotchis"
+      >
+        🐣 Mes Pets
+      </button>
+      <button
+        v-if="isAuthenticated"
+        class="ghost"
+        @click="navigate('map')"
+        title="Voir la carte"
+      >
+        🗺️ Carte
+      </button>
+      <button
         class="ghost"
         @click="navigate('test-api')"
         title="Test API"

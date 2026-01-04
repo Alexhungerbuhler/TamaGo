@@ -16,17 +16,17 @@
 
 <script setup>
 import Header from '../components/Header.vue';
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../store';
 
 const router = useRouter();
-const isAuthenticated = ref(false);
-const currentUser = ref({ name: null });
+const authStore = useAuthStore();
+const isAuthenticated = authStore.isAuthenticated;
+const currentUser = authStore.currentUser;
 
 function handleNavigate(target) {
   if (target === 'logout') {
-    isAuthenticated.value = false;
-    currentUser.value = { name: null };
+    authStore.logout();
     router.push('/login');
   } else if (target === 'register') {
     router.push('/register');

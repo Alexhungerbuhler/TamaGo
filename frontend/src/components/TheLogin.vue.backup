@@ -1,31 +1,53 @@
+login.vue
+
 <script setup>
-import { reactive, computed } from "vue";
-import { useAuthStore } from '../store';
+import { reactive, ref } from "vue";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000";
 
 const emit = defineEmits(["login-success"]);
-
-const authStore = useAuthStore();
 
 const form = reactive({
   name: "",
   password: ""
 });
 
-const loading = computed(() => authStore.loading);
-const error = computed(() => authStore.error);
+const loading = ref(false);
+const error = ref("");
 
 async function handleSubmit() {
+  error.value = "";
   if (!form.name || !form.password) {
-    authStore.error = "Merci d'indiquer votre nom et votre mot de passe.";
+    error.value = "Merci d’indiquer votre nom et votre mot de passe.";
     return;
   }
+  loading.value = true;
 
   try {
-    await authStore.login(form.name, form.password);
-    emit("login-success");
+    const response = await fetch(`${API_BASE_URL}/users/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(form)
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.message || "Identifiants invalides");
+    }
+
+    const data = await response.json();
+    emit("login-success", {
+      token: data.token,
+      user: { name: form.name }
+    });
     form.password = "";
   } catch (err) {
-    console.error('Login failed:', err);
+    error.value = err.message || "Impossible de se connecter";
+  } finally {
+    loading.value = false;
   }
 }
 </script>
@@ -37,7 +59,7 @@ async function handleSubmit() {
 
     <form class="form" @submit.prevent="handleSubmit">
       <label>
-        Nom d'utilisateur
+        Nom d’utilisateur
         <input
           v-model.trim="form.name"
           type="text"
@@ -76,58 +98,43 @@ async function handleSubmit() {
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-h2 {
-  margin: 0 0 0.5rem;
-  color: #0f172a;
-  font-size: 1.75rem;
-}
-
 .subtitle {
-  color: #64748b;
-  margin: 0 0 1.5rem;
+  margin-top: 0.35rem;
+  color: #475569;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: #334155;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 input {
-  padding: 0.75rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-input:focus {
-  outline: none;
-  border-color: #3b82f6;
 }
 
 button {
-  padding: 0.875rem;
-  background: #3b82f6;
-  color: white;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 999px;
+  padding: 0.85rem 1.25rem;
   font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-button:hover:not(:disabled) {
   background: #2563eb;
+  color: #fff;
+  margin-top: 0.5rem;
+  transition: opacity 0.15s ease;
 }
 
 button:disabled {
@@ -136,8 +143,9 @@ button:disabled {
 }
 
 .error {
-  color: #ef4444;
+  color: #dc2626;
   margin: 0;
-  font-size: 0.875rem;
+  font-weight: 600;
 }
 </style>
+

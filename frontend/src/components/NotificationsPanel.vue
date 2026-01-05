@@ -63,9 +63,12 @@ function formatTime(timestamp) {
   position: fixed;
   top: 70px;
   right: 20px;
-  z-index: 1000;
+  z-index: 100;
   width: 350px;
   max-width: 90vw;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  pointer-events: none;
 }
 
 .notification {
@@ -77,6 +80,7 @@ function formatTime(timestamp) {
   cursor: pointer;
   transition: all 0.3s;
   border-left: 4px solid;
+  pointer-events: all;
 }
 
 .notification:hover {

@@ -115,6 +115,36 @@ export async function getPet(req, res, next) {
   }
 }
 
+export async function updatePet(req, res, next) {
+  try {
+    // Vérification de l'authentification
+    if (!req.user) {
+      return res.status(401).send("Authentication required");
+    }
+    
+    const pet = await Tamagotchi.findById(req.params.id).exec();
+    if (!pet) return res.sendStatus(404);
+    
+    // Vérifier que l'utilisateur est bien le propriétaire
+    if (pet.owner && pet.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).send("You can only update your own pets");
+    }
+    
+    // Mettre à jour uniquement les champs autorisés
+    const allowedFields = ['name', 'species', 'inclination'];
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        pet[field] = req.body[field];
+      }
+    });
+    
+    await pet.save();
+    res.json(pet);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function deletePet(req, res, next) {
   try {
     // Vérification de l'authentification

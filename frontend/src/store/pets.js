@@ -177,6 +177,29 @@ export const usePetsStore = defineStore('pets', () => {
   }
 
   /**
+   * Mettre à jour un pet
+   */
+  async function updatePet(id, petData) {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await petsService.update(id, petData);
+      const updatedPet = response.data;
+      
+      // Mettre à jour dans la liste
+      await updatePetInList(id, updatedPet);
+      
+      return updatedPet;
+    } catch (err) {
+      error.value = err.message || 'Erreur lors de la mise à jour du pet';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  /**
    * Supprimer un pet
    */
   async function deletePet(id) {
@@ -359,6 +382,7 @@ export const usePetsStore = defineStore('pets', () => {
     fetchPets,
     fetchPet,
     createPet,
+    updatePet,
     deletePet,
     feedPet,
     toiletPet,

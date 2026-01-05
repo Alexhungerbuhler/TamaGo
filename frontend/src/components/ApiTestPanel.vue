@@ -34,7 +34,35 @@
     </div>
 
     <div class="test-section">
-      <h3>3. Test Actions sur Pet</h3>
+      <h3>3. Test CRUD Pet</h3>
+      <div v-if="testPetId" class="test-controls">
+        <p>Pet ID: {{ testPetId }}</p>
+        <div class="crud-section">
+          <h4>📝 Update (Édition)</h4>
+          <input v-model="updatePetName" placeholder="Nouveau nom" />
+          <select v-model="updatePetSpecies">
+            <option value="cat">Chat</option>
+            <option value="dog">Chien</option>
+            <option value="bird">Oiseau</option>
+            <option value="dragon">Dragon</option>
+          </select>
+          <button @click="testUpdatePet">✏️ Mettre à jour</button>
+        </div>
+        <div class="crud-section danger">
+          <h4>🗑️ Delete (Suppression)</h4>
+          <button @click="testDeletePet" class="danger-btn">❌ Supprimer ce pet</button>
+        </div>
+      </div>
+      <div v-else class="info">
+        Créez d'abord un pet pour tester le CRUD
+      </div>
+      <div v-if="crudResult" class="result">
+        <pre>{{ JSON.stringify(crudResult, null, 2) }}</pre>
+      </div>
+    </div>
+
+    <div class="test-section">
+      <h3>4. Test Actions sur Pet</h3>
       <div v-if="testPetId" class="test-controls">
         <p>Pet ID: {{ testPetId }}</p>
         <button @click="testFeedPet">🍔 Nourrir</button>
@@ -52,7 +80,7 @@
     </div>
 
     <div class="test-section">
-      <h3>4. Test Stats Globales</h3>
+      <h3>5. Test Stats Globales</h3>
       <div class="test-controls">
         <button @click="testGlobalStats">Récupérer les stats globales</button>
       </div>
@@ -62,7 +90,7 @@
     </div>
 
     <div class="test-section">
-      <h3>5. Informations Stores</h3>
+      <h3>6. Informations Stores</h3>
       <div class="store-info">
         <p><strong>Auth:</strong> {{ authStore.isAuthenticated ? '✅ Connecté' : '❌ Non connecté' }}</p>
         <p v-if="authStore.currentUser"><strong>User:</strong> {{ authStore.currentUser.name }}</p>
@@ -95,10 +123,13 @@ const testUser = ref({
 
 const newPetName = ref('TestPet');
 const newPetSpecies = ref('cat');
+const updatePetName = ref('');
+const updatePetSpecies = ref('cat');
 const testPetId = ref(null);
 
 const authResult = ref('');
 const petsResult = ref(null);
+const crudResult = ref(null);
 const actionResult = ref(null);
 const statsResult = ref(null);
 const error = ref('');
@@ -168,6 +199,50 @@ const testListPets = async () => {
     };
   } catch (err) {
     error.value = err.message;
+  }
+};
+
+const testUpdatePet = async () => {
+  try {
+    error.value = '';
+    crudResult.value = null;
+    const updateData = {};
+    
+    if (updatePetName.value) {
+      updateData.name = updatePetName.value;
+    }
+    if (updatePetSpecies.value) {
+      updateData.species = updatePetSpecies.value;
+    }
+    
+    const result = await petsStore.updatePet(testPetId.value, updateData);
+    crudResult.value = { action: 'update', success: true, result };
+    
+    // Réinitialiser les champs
+    updatePetName.value = '';
+    updatePetSpecies.value = 'cat';
+  } catch (err) {
+    error.value = err.message;
+    crudResult.value = { action: 'update', success: false, error: err.message };
+  }
+};
+
+const testDeletePet = async () => {
+  if (!confirm(`Supprimer le pet ${testPetId.value} ?`)) return;
+  
+  try {
+    error.value = '';
+    crudResult.value = null;
+    await petsStore.deletePet(testPetId.value);
+    crudResult.value = { 
+      action: 'delete', 
+      success: true, 
+      message: `Pet ${testPetId.value} supprimé` 
+    };
+    testPetId.value = null;
+  } catch (err) {
+    error.value = err.message;
+    crudResult.value = { action: 'delete', success: false, error: err.message };
   }
 };
 
@@ -314,6 +389,34 @@ const testGlobalStats = async () => {
   border: 1px solid #ffc107;
   border-radius: 4px;
   color: #856404;
+}
+
+.crud-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #e3e3e3;
+}
+
+.crud-section h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: #555;
+}
+
+.crud-section.danger {
+  border-color: #ffebee;
+  background: #ffebee;
+}
+
+.danger-btn {
+  background: #f44336 !important;
+  color: white;
+}
+
+.danger-btn:hover {
+  background: #d32f2f !important;
 }
 
 .store-info {

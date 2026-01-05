@@ -12,6 +12,7 @@ import {
   playPet,
   sleepPet,
   toiletPet,
+  updatePet,
 } from "../api/pets.js";
 import { getGlobalStats, getUserStats } from "../api/stats.js";
 import { manualTick } from "../api/tick.js";
@@ -43,6 +44,7 @@ router.delete("/users/avatar", authenticate, deleteAvatar);
 router.get("/pets", optionalAuthenticate, listPets);           // GET /api/pets?userId=&page=&limit=
 router.post("/pets", authenticate, createPet);                 // POST /api/pets (protected)
 router.get("/pets/:id", getPet);                               // GET /api/pets/:id
+router.patch("/pets/:id", authenticate, updatePet);            // PATCH /api/pets/:id (protected)
 router.delete("/pets/:id", authenticate, deletePet);           // DELETE /api/pets/:id (protected)
 
 // Pet actions (stat updates - all protected)

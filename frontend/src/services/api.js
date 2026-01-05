@@ -103,6 +103,15 @@ export const petsService = {
   },
 
   /**
+   * Mettre à jour un pet
+   * @param {string} id - ID du pet
+   * @param {Object} petData - Données à mettre à jour
+   */
+  update(id, petData) {
+    return apiClient.patch(`/pets/${id}`, petData);
+  },
+
+  /**
    * Supprimer un pet
    * @param {string} id - ID du pet
    */

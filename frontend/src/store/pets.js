@@ -105,7 +105,15 @@ export const usePetsStore = defineStore('pets', () => {
       const data = response.data;
       
       // Si la réponse contient la pagination
-      if (data.pets) {
+      if (data.pagination) {
+        pets.value = data.data || [];
+        pagination.value = {
+          page: data.pagination.page || 1,
+          limit: data.pagination.limit || 10,
+          total: data.pagination.total || 0,
+          hasMore: (data.pagination.page || 1) < (data.pagination.pages || 1)
+        };
+      } else if (data.pets) {
         pets.value = data.pets;
         pagination.value = {
           page: data.page || 1,
@@ -113,9 +121,12 @@ export const usePetsStore = defineStore('pets', () => {
           total: data.total || 0,
           hasMore: data.hasMore || false
         };
-      } else {
+      } else if (Array.isArray(data)) {
         // Sinon, c'est directement un tableau
         pets.value = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        // Format avec data.data
+        pets.value = data.data;
       }
       
       return pets.value;

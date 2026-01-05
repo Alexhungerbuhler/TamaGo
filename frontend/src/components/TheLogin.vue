@@ -1,11 +1,13 @@
 <script setup>
 import { reactive, computed } from "vue";
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../store';
 import { useFormValidation } from '../composables/useFormValidation';
 import { loginSchema } from '../utils/validation';
 
 const emit = defineEmits(["login-success"]);
 
+const router = useRouter();
 const authStore = useAuthStore();
 const { errors, touchField, validate, shouldShowError, getError, reset } = useFormValidation(loginSchema);
 
@@ -20,8 +22,6 @@ const serverError = computed(() => authStore.error);
 // Validation en temps réel à la perte de focus
 function handleBlur(fieldName) {
   touchField(fieldName);
-  const { validateSingleField } = useFormValidation(loginSchema);
-  validateSingleField(fieldName, form[fieldName]);
 }
 
 async function handleSubmit() {
@@ -43,167 +43,216 @@ async function handleSubmit() {
     console.error('Login failed:', err);
   }
 }
+
+function goToRegister() {
+  router.push('/register');
+}
 </script>
 
 <template>
-  <div class="card">
-    <h2>Connexion</h2>
-    <p class="subtitle">Connecte-toi à ton compte TamaGo.</p>
+  <div class="login-container">
+    <div class="login-card">
+      <h1 class="greeting-title">Hello there !</h1>
+      <p class="greeting-subtitle">Let's connect !</p>
 
-    <form class="form" @submit.prevent="handleSubmit">
-      <div class="form-field">
-        <label>
-          Nom d'utilisateur
-          <input
-            v-model.trim="form.name"
-            type="text"
-            placeholder="ex: admin"
-            autocomplete="username"
-            :class="{ 'input-error': shouldShowError('name') }"
-            @blur="handleBlur('name')"
-          />
-        </label>
+      <form class="login-form" @submit.prevent="handleSubmit">
+        <input
+          v-model.trim="form.name"
+          type="text"
+          placeholder="Username"
+          autocomplete="username"
+          class="input-field"
+          :class="{ 'input-error': shouldShowError('name') }"
+          @blur="handleBlur('name')"
+        />
         <p v-if="shouldShowError('name')" class="field-error">
           {{ getError('name') }}
         </p>
-      </div>
 
-      <div class="form-field">
-        <label>
-          Mot de passe
-          <input
-            v-model="form.password"
-            type="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            :class="{ 'input-error': shouldShowError('password') }"
-            @blur="handleBlur('password')"
-          />
-        </label>
+        <input
+          v-model="form.password"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          class="input-field"
+          :class="{ 'input-error': shouldShowError('password') }"
+          @blur="handleBlur('password')"
+        />
         <p v-if="shouldShowError('password')" class="field-error">
           {{ getError('password') }}
         </p>
-      </div>
 
-      <!-- Erreur serveur -->
-      <p v-if="serverError" class="error">{{ serverError }}</p>
+        <!-- Erreur serveur -->
+        <p v-if="serverError" class="server-error">{{ serverError }}</p>
 
-      <button type="submit" :disabled="loading">
-        {{ loading ? "Connexion..." : "Se connecter" }}
+        <button type="submit" class="login-button" :disabled="loading">
+          {{ loading ? "Connecting..." : "Login" }}
+        </button>
+      </form>
+
+      <p class="register-text">Don't have an account ?</p>
+      <button class="register-button" @click="goToRegister">
+        register
       </button>
-    </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.card {
-  background: #fff;
-  padding: 2rem;
-  border-radius: 1rem;
-  max-width: 420px;
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
+
+.login-container {
   width: 100%;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  padding: 2rem 1rem;
 }
 
-h2 {
-  margin: 0 0 0.5rem;
-  color: #0f172a;
-  font-size: 1.75rem;
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.subtitle {
-  color: #64748b;
-  margin: 0 0 1.5rem;
+.greeting-title {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
 }
 
-.form {
+.greeting-subtitle {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: #808080;
+  margin: 0 0 3rem 0;
+  line-height: 1.2;
+}
+
+.login-form {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: #334155;
-}
-
-input {
-  padding: 0.75rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-input.input-error {
-  border-color: #ef4444;
-}
-
-input.input-error:focus {
-  border-color: #dc2626;
-}
-
-button {
-  padding: 0.875rem;
-  background: #3b82f6;
-  color: white;
+.input-field {
+  width: 100%;
+  padding: 1rem;
+  background: #e5e5e5;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
+  font-family: 'Pixelify Sans', monospace;
   font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+  color: #333333;
+  box-sizing: border-box;
   transition: background 0.2s;
 }
 
-button:hover:not(:disabled) {
+.input-field::placeholder {
+  color: #666666;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.input-field:focus {
+  outline: none;
+  background: #d5d5d5;
+}
+
+.input-field.input-error {
+  background: #ffe5e5;
+  border: 2px solid #ff4444;
+}
+
+.field-error {
+  color: #ff4444;
+  margin: -0.5rem 0 0 0;
+  font-size: 0.875rem;
+  font-family: 'Pixelify Sans', monospace;
+  text-align: left;
+}
+
+.server-error {
+  color: #ff4444;
+  background: #ffe5e5;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin: 0;
+  font-size: 0.875rem;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.login-button {
+  width: 100%;
+  padding: 1rem;
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 0.5rem;
+}
+
+.login-button:hover:not(:disabled) {
   background: #2563eb;
 }
 
-button:disabled {
+.login-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.field-error {
-  color: #ef4444;
-  margin: 0;
-  font-size: 0.875rem;
-  animation: slideDown 0.2s ease;
+.register-text {
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 1.5rem 0 1rem 0;
 }
 
-.error {
-  color: #ef4444;
-  background: #fee2e2;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  margin: 0;
-  font-size: 0.875rem;
-  border-left: 3px solid #ef4444;
+.register-button {
+  padding: 0.875rem 2rem;
+  background: #4a90e2;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
+.register-button:hover {
+  background: #357abd;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .greeting-title {
+    font-size: 2rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .greeting-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .login-card {
+    max-width: 100%;
   }
 }
 </style>

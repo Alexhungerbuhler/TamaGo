@@ -65,9 +65,9 @@ function startNewGame() {
   router.push('/tamagotchis');
 }
 
-function logout() {
-  authStore.logout();
-  router.push('/');
+async function logout() {
+  await authStore.logout();
+  await router.push('/login');
 }
 </script>
 
@@ -130,13 +130,13 @@ function logout() {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
-  background: #3b82f6;
+  background: #627DE0;
   color: #ffffff;
 }
 
 .btn-continue:hover,
 .btn-new-game:hover {
-  background: #2563eb;
+  background: #5169c7;
 }
 
 .btn-continue:active,
@@ -161,12 +161,12 @@ function logout() {
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s;
-  background: #ef4444;
+  background: #E06264;
   color: #ffffff;
 }
 
 .btn-logout:hover {
-  background: #dc2626;
+  background: #c74f51;
 }
 
 .btn-logout:active {

@@ -88,12 +88,12 @@ function handleLogout() {
 }
 
 .login-btn {
-  border: 2px solid #2563eb;
+  border: 2px solid #627DE0;
   border-radius: 999px;
   padding: 0.5rem 1.25rem;
   font-weight: 600;
   background: transparent;
-  color: #2563eb;
+  color: #627DE0;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.95rem;
@@ -101,10 +101,10 @@ function handleLogout() {
 }
 
 .login-btn:hover {
-  background: #2563eb;
+  background: #627DE0;
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 4px 12px rgba(98, 125, 224, 0.3);
 }
 
 .login-btn:active {
@@ -112,12 +112,12 @@ function handleLogout() {
 }
 
 .logout-btn {
-  border: 2px solid #ef4444;
+  border: 2px solid #E06264;
   border-radius: 999px;
   padding: 0.5rem 1.25rem;
   font-weight: 600;
   background: transparent;
-  color: #ef4444;
+  color: #E06264;
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.95rem;
@@ -125,10 +125,10 @@ function handleLogout() {
 }
 
 .logout-btn:hover {
-  background: #ef4444;
+  background: #E06264;
   color: #fff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(224, 98, 100, 0.3);
 }
 
 .logout-btn:active {

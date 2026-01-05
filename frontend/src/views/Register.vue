@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../store'
 import { usePetsStore } from '../store/pets'
@@ -49,28 +49,16 @@ const hasPet = computed(() => {
   return petsStore.petsList && petsStore.petsList.length > 0;
 });
 
-async function onRegisterSuccess({ user }) {
-  // Si l'inscription réussit et que l'utilisateur est connecté
+// Rediriger vers dashboard si déjà connecté
+onMounted(() => {
   if (authStore.isAuthenticated) {
-    // Vérifier si l'utilisateur a déjà des pets
-    try {
-      await petsStore.fetchPets({ userId: authStore.currentUser.id });
-      
-      // Si l'utilisateur n'a pas de pets, afficher le formulaire de nommage
-      if (petsStore.petsList.length === 0) {
-        randomSpecies.value = getRandomSpecies();
-        showNamePet.value = true;
-      } else {
-        // Si l'utilisateur a déjà des pets, rediriger vers la liste
-        router.push('/tamagotchis');
-      }
-    } catch (err) {
-      console.error('Erreur lors de la récupération des pets:', err);
-      // En cas d'erreur, afficher quand même le formulaire de nommage
-      randomSpecies.value = getRandomSpecies();
-      showNamePet.value = true;
-    }
+    router.push('/dashboard');
   }
+});
+
+function onRegisterSuccess({ user }) {
+  // Rediriger vers le dashboard après inscription
+  router.push('/dashboard');
 }
 
 function onPetCreated(pet) {

@@ -4,16 +4,32 @@
       <span class="logo">🐣</span>
       <strong>TamaGo</strong>
     </div>
-    <button class="login-btn" @click="navigate('login')">
+    <button 
+      v-if="!isAuthenticated"
+      class="login-btn" 
+      @click="navigate('login')"
+    >
       Connexion
+    </button>
+    <button 
+      v-else
+      class="logout-btn" 
+      @click="handleLogout"
+    >
+      Déconnexion
     </button>
   </header>
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/index';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
+const isAuthenticated = computed(() => authStore.isAuthenticated);
 
 function navigate(target) {
   if (target === 'home') {
@@ -21,6 +37,11 @@ function navigate(target) {
   } else if (target === 'login') {
     router.push('/login');
   }
+}
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/');
 }
 </script>
 
@@ -90,6 +111,30 @@ function navigate(target) {
   transform: translateY(0);
 }
 
+.logout-btn {
+  border: 2px solid #ef4444;
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background: #ef4444;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .home-header {
@@ -109,6 +154,11 @@ function navigate(target) {
   }
 
   .login-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .logout-btn {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
   }

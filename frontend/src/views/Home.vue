@@ -121,10 +121,20 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../store';
 import HomeHeader from '../components/HomeHeader.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
+
+// Rediriger vers dashboard si déjà connecté
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.push('/dashboard');
+  }
+});
 
 function goToRegister() {
   router.push('/register');

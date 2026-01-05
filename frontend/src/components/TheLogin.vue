@@ -36,9 +36,10 @@ async function handleSubmit() {
 
   try {
     await authStore.login(form.name, form.password);
-    emit("login-success");
     form.password = "";
     reset();
+    // Émettre l'événement après que tout soit terminé
+    emit("login-success");
   } catch (err) {
     console.error('Login failed:', err);
   }

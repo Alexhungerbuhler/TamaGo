@@ -129,10 +129,12 @@ import HomeHeader from '../components/HomeHeader.vue';
 const router = useRouter();
 const authStore = useAuthStore();
 
-// Rediriger vers dashboard si déjà connecté
+// Rediriger selon l'état de connexion
 onMounted(() => {
   if (authStore.isAuthenticated) {
     router.push('/dashboard');
+  } else {
+    router.push('/login');
   }
 });
 

@@ -53,7 +53,7 @@ function goToRegister() {
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h1 class="greeting-title">Hello there !</h1>
+      <h1 class="greeting-title">Hello there, Welcome on TamaGo !</h1>
       <p class="greeting-subtitle">Let's connect !</p>
 
       <form class="login-form" @submit.prevent="handleSubmit">
@@ -196,7 +196,7 @@ function goToRegister() {
 .login-button {
   width: 100%;
   padding: 1rem;
-  background: #3b82f6;
+  background: #627DE0;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -209,7 +209,7 @@ function goToRegister() {
 }
 
 .login-button:hover:not(:disabled) {
-  background: #2563eb;
+  background: #5169c7;
 }
 
 .login-button:disabled {
@@ -227,7 +227,7 @@ function goToRegister() {
 
 .register-button {
   padding: 0.875rem 2rem;
-  background: #4a90e2;
+  background: #627DE0;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -239,7 +239,7 @@ function goToRegister() {
 }
 
 .register-button:hover {
-  background: #357abd;
+  background: #5169c7;
 }
 
 /* Mobile */

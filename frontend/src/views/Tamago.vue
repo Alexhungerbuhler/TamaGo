@@ -3,7 +3,7 @@
     <!-- Background cloud element -->
     <img :class="$style.b4de0fe89384581A3938a7a175Icon" src="/background/background.svg" alt="background" />
     
-    <!-- Top Stats Icons with Labels -->
+    <!-- Top Stats Icons with Labels and Gauges -->
     <div :class="$style.topStatsContainer">
       <div 
         v-for="(icon, index) in topIcons"
@@ -12,6 +12,11 @@
       >
         <img :class="$style.topIcon" :src="icon.src" :alt="icon.label" :title="icon.label" />
         <b :class="$style.topLabel">{{ icon.label }}</b>
+        <!-- Gauge for stat value -->
+        <div :class="$style.gaugeContainer">
+          <div :class="$style.gauge" :style="{ width: getStatValue(icon.label) + '%' }"></div>
+        </div>
+        <span :class="$style.statValue">{{ getStatValue(icon.label) }}</span>
       </div>
     </div>
    
@@ -22,7 +27,6 @@
         v-for="(icon, index) in bottomIcons"
         :key="index"
         :class="[$style.navItem, { [$style.blinking]: selectedBottomIndex === index }]"
-        @click="icon.action"
       >
         <img :class="$style.navIcon" :src="icon.src" :alt="icon.label" :title="icon.label" />
         <b :class="$style.navLabel">{{ icon.label }}</b>
@@ -30,25 +34,26 @@
     </div>
     
     <!-- Main content icons (can be replaced with actual images) -->
-    <div :class="$style.eggPlaceholder">
-        <img src="/Eggs/egg.svg" alt="Egg" title="Egg" />
+    <div :class="$style.eggPlaceholder" @click="handleEggClick">
+      <img v-if="!isHatched" src="/Eggs/egg.svg" alt="Egg" title="Egg" :class="{ [$style.shake]: isShaking }" />
+      <img v-else :src="hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
     </div>
+
+    <!-- Pet name -->
+    <b :class="$style.petName">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Instruction text -->
-    <b :class="$style.shakeYourPhone">Shake your phone <br/>to hatch the egg</b>
-
-    
-    <!-- Phone screen decorations -->
-    <img :class="$style.ecranDarriveInner" alt="antenna" />
-    <img :class="$style.polygonIcon" alt="corner-decoration-1" />
-    <img :class="$style.ecranDarriveChild2" alt="corner-decoration-2" />
+    <b :class="$style.shakeYourPhone">
+      <span v-if="!isHatched">Click {{ clicksNeeded - clickCount }} times<br/>to hatch the egg</span>
+      <span v-else>🎉 Pet hatched!</span>
+    </b>
     
     <!-- Navigation arrows -->
     <img :class="$style.arrowLeft" src="/Arrows/fleches droite et gauche 2.svg" alt="Left arrow" @click="handleLeftArrow" />
     <img :class="$style.arrowRight" src="/Arrows/fleches droite et gauche 1.svg" alt="Right arrow" @click="handleRightArrow" />
     
     <!-- USE Button -->
-    <div :class="$style.pixilFrame01Parent">
+    <div :class="$style.pixilFrame01Parent" @click="handleUse">
       <img :class="$style.pixilFrame01Icon" src="/Arrows/Group 23.svg" alt="button-bg" />
     </div>
   </div>
@@ -56,10 +61,76 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { usePetsStore } from '../store/pets';
 
 const router = useRouter();
+const petsStore = usePetsStore();
 const selectedIconIndex = ref(0);
+const currentPet = ref(null);
+
+// Egg hatching system
+const clickCount = ref(0);
+const clicksNeeded = 5; // Number of clicks to hatch
+const isHatched = ref(false);
+const hatchedPetImage = ref('');
+const isShaking = ref(false);
+
+// Available pet images for hatching
+const availablePets = [
+  '/Pets/buisson 1.svg',
+  '/Pets/chatFeu 1.svg',
+  '/Pets/goute 1.svg',
+  '/Pets/jspcestquoi 1.svg',
+  '/Pets/raichu 1.svg',
+  '/Pets/renarddelumiere 1.svg',
+  '/Pets/tortuepierre 1.svg'
+];
+
+// Get random pet image
+const getRandomPet = () => {
+  return availablePets[Math.floor(Math.random() * availablePets.length)];
+};
+
+// Handle egg click - increment click count and check for hatching
+const handleEggClick = () => {
+  if (isHatched.value) return;
+  
+  clickCount.value++;
+  console.log(`Egg clicked: ${clickCount.value}/${clicksNeeded}`);
+  
+  if (clickCount.value >= clicksNeeded) {
+    hatchEgg();
+  }
+};
+
+// Hatch the egg
+const hatchEgg = () => {
+  isHatched.value = true;
+  hatchedPetImage.value = getRandomPet();
+  console.log('Egg hatched! Pet:', hatchedPetImage.value);
+};
+
+// Reset egg (for testing or to hatch again)
+const resetEgg = () => {
+  isHatched.value = false;
+  hatchedPetImage.value = '';
+  clickCount.value = 0;
+};
+
+// Device shake detection for mobile
+const handleDeviceShake = () => {
+  if (isHatched.value) return;
+  
+  isShaking.value = true;
+  console.log('Device shaken!');
+  hatchEgg();
+  
+  // Reset shake indicator after animation
+  setTimeout(() => {
+    isShaking.value = false;
+  }, 1000);
+};
 
 // Navigation functions (defined first so they can be referenced in allIcons)
 const goToProfile = () => router.push('/profile');
@@ -70,10 +141,10 @@ const goToGames = () => router.push('/games');
 // All icons in circular navigation order (top then bottom)
 const allIcons = ref([
   // Top icons
-  { label: 'Hunger', src: '/icons/Group-1.svg', section: 'top' },
-  { label: 'Hygiene', src: '/icons/health-stool--Streamline-Pixel.svg', section: 'top' },
-  { label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top' },
-  { label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top' },
+  { label: 'Hunger', src: '/icons/Group-1.svg', section: 'top', key: 'hunger' },
+  { label: 'Hygiene', src: '/icons/health-stool--Streamline-Pixel.svg', section: 'top', key: 'hygiene' },
+  { label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top', key: 'fun' },
+  { label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top', key: 'energy' },
   // Bottom icons
   { label: 'Profile', src: '/icons/Group.svg', section: 'bottom', action: goToProfile },
   { label: 'Map', src: '/icons/map-navigation-location-focus.svg', section: 'bottom', action: goToMap },
@@ -101,10 +172,116 @@ const handleRightArrow = () => {
   selectedIconIndex.value = (selectedIconIndex.value + 1) % allIcons.value.length;
 };
 
-const handleUse = () => {
-  console.log('USE button clicked');
-  // Add egg hatching logic here
+// Get stat value for a given stat name
+const getStatValue = (statName) => {
+  if (!currentPet.value) return 0;
+  
+  const statKey = statName.toLowerCase();
+  const value = currentPet.value[statKey] || 0;
+  
+  // Ensure value is between 0 and 100
+  return Math.max(0, Math.min(100, value));
 };
+
+// Get current selected icon
+const currentSelectedIcon = computed(() => {
+  return allIcons.value[selectedIconIndex.value];
+});
+
+// Handle USE button - execute pet action based on currently selected icon
+const handleUse = async () => {
+  const icon = currentSelectedIcon.value;
+  
+  if (!icon || !currentPet.value?._id) return;
+  
+  try {
+    const petId = currentPet.value._id;
+    
+    // Map icons to pet actions based on their key
+    switch(icon.key) {
+      case 'hunger':
+        await petsStore.feedPet(petId);
+        console.log('Hunger action: Pet fed');
+        break;
+      case 'hygiene':
+        await petsStore.toiletPet(petId);
+        console.log('Hygiene action: Pet cleaned');
+        break;
+      case 'fun':
+        await petsStore.playWithPet(petId);
+        console.log('Fun action: Pet played with');
+        break;
+      case 'energy':
+        await petsStore.sleepPet(petId);
+        console.log('Energy action: Pet slept');
+        break;
+      default:
+        console.log('No action available for this icon');
+    }
+    
+    // Refresh pet data to update gauges
+    await petsStore.fetchPet(petId);
+    currentPet.value = petsStore.currentPet;
+    
+  } catch (error) {
+    console.error('Erreur lors de l\'exécution de l\'action:', error);
+  }
+};
+
+// Fetch the first pet's data on component mount
+onMounted(async () => {
+  try {
+    await petsStore.fetchPets({ limit: 1 });
+    if (petsStore.petsList.length > 0) {
+      currentPet.value = petsStore.petsList[0];
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement du pet:', error);
+  }
+  
+  // Setup device shake listener for mobile
+  let lastShakeTime = 0;
+  const shakeThreshold = 15;
+  const shakeTimeout = 500;
+  
+  const onDeviceMotion = (event) => {
+    const acceleration = event.acceleration;
+    if (!acceleration) return;
+    
+    const x = acceleration.x || 0;
+    const y = acceleration.y || 0;
+    const z = acceleration.z || 0;
+    
+    const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+    
+    if (totalAcceleration > shakeThreshold) {
+      const now = Date.now();
+      if (now - lastShakeTime > shakeTimeout) {
+        handleDeviceShake();
+        lastShakeTime = now;
+      }
+    }
+  };
+  
+  // Request permission for iOS 13+
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission()
+      .then(permissionState => {
+        if (permissionState === 'granted') {
+          window.addEventListener('devicemotion', onDeviceMotion);
+        }
+      })
+      .catch(console.error);
+  } else {
+    // For Android and older iOS
+    window.addEventListener('devicemotion', onDeviceMotion);
+  }
+  
+  // Cleanup
+  return () => {
+    window.removeEventListener('devicemotion', onDeviceMotion);
+  };
+});
 </script>
 
 <style module>
@@ -410,6 +587,19 @@ const handleUse = () => {
   flex-shrink: 0;
 }
 
+.petName {
+  position: absolute;
+  top: 355px;
+  left: calc(50% - 50px);
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  color: #000;
+  white-space: nowrap;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
 .energyPlaceholder {
   position: absolute;
   top: 84px;
@@ -540,10 +730,6 @@ const handleUse = () => {
   transition: transform 0.2s;
 }
 
-.arrowLeft:hover {
-  transform: scale(1.1);
-}
-
 .arrowRight {
   position: absolute;
   top: 760px;
@@ -554,10 +740,6 @@ const handleUse = () => {
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.2s;
-}
-
-.arrowRight:hover {
-  transform: scale(1.1);
 }
 
 .pixilFrame01Parent {
@@ -572,11 +754,11 @@ const handleUse = () => {
 
 .pixilFrame01Icon {
   position: absolute;
-  top: calc(50% - 96.5px);
-  left: calc(50% - 96.5px);
-  width: 193px;
-  height: 193px;
-  object-fit: cover;
+  top: calc(50% - 63.5px);
+  left: calc(50% - 69px);
+  width: 133px;
+  height: 133px;
+  object-fit: fill;
 }
 
 .rectangle {
@@ -599,7 +781,60 @@ const handleUse = () => {
   transition: transform 0.2s;
 }
 
-.use:hover {
-  transform: scale(1.05);
+/* Gauge styles */
+.gaugeContainer {
+  width: 50px;
+  height: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #000;
+  margin-top: 4px;
+}
+
+.gauge {
+  height: 100%;
+  background: linear-gradient(to right, #ff6b6b, #ffd93d, #6bcf7f);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.statValue {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+  margin-top: 2px;
+}
+
+/* Egg hatching styles */
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px) rotate(-2deg); }
+  20%, 40%, 60%, 80% { transform: translateX(5px) rotate(2deg); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.hatchedPet {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: contain;
+  animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 </style>

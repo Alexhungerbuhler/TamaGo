@@ -1,9 +1,52 @@
-<svg width="143" height="156" viewBox="0 0 143 156" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<rect width="161" height="161" fill="url(#pattern0_125_1054)"/>
-<defs>
-<pattern id="pattern0_125_1054" patternContentUnits="objectBoundingBox" width="1" height="1">
-<use xlink:href="#image0_125_1054" transform="scale(0.02)"/>
-</pattern>
-<image id="image0_125_1054" width="50" height="50" preserveAspectRatio="none" xlink:href="data:image/png;base64,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"/>
-</defs>
+<svg width="107" height="54" viewBox="0 0 107 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M90.0791 3.5V4.89551H92.6143V6.52344H94.7881V7.68652H100.5V43.8486H94.7881V45.709H92.6143V46.8721H90.4414V48.5H10.7441V47.1045H8.20898V45.4766H6.03516V43.8486H3.5V7.91895H6.03516V6.52344H8.20898V4.89551H10.7441V3.5H90.0791Z" fill="white"/>
+<path d="M94.0498 0V2.96875H97.5322V6.43262H100.518V9.40234H104V42.1035H100.518V45.5674H97.5322V48.5361H94.5469V52H9.9502V49.0312H6.46777V45.5674H3.48242V42.1035H0V9.40234H3.48242V6.43262H6.46777V2.96875H9.9502V0H94.0498ZM13.9502 6.96875H10.4678V10.4326H7.48242V13.4023H4V38.1035H7.48242V41.5674H10.4678V45.0312H13.9502V48H90.5469V44.5361H93.5322V41.5674H96.5176V38.1035H100V13.4023H96.5176V10.4326H93.5322V6.96875H90.0498V4H13.9502V6.96875Z" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 60 16)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 64 20)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 68 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 64 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 64 28)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 60 32)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 60 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 56 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 52 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 48 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 44 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 40 24)" fill="black"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 60 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 56 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 56 32)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 52 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 48 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 44 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 40 28)" fill="#D9D9D9"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 107 32)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 107 36)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 103 44)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 99 44)" fill="black" fill-opacity="0.35"/>
+<rect width="5" height="3" transform="matrix(-1 0 0 1 100 48)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="3" transform="matrix(-1 0 0 1 95 48)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 94 50)" fill="black" fill-opacity="0.35"/>
+<rect width="3" height="3" transform="matrix(-1 0 0 1 97 51)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 90 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 86 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 82 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 78 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 74 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 70 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 66 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 62 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 58 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 54 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 50 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 46 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 42 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 38 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 34 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 30 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 26 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 22 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 18 50)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 107 40)" fill="black" fill-opacity="0.35"/>
+<rect width="4" height="4" transform="matrix(-1 0 0 1 103 40)" fill="black" fill-opacity="0.35"/>
 </svg>

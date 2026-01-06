@@ -133,7 +133,7 @@ export function initializeWebSocket(httpServer) {
     });
 
     // 4. Notification de pet en mauvais état
-    socket.on('pet:check-health', async () => {
+    /* socket.on('pet:check-health', async () => {
       try {
         const pets = await Tamagotchi.find({ owner: socket.userId }).exec();
         
@@ -156,7 +156,7 @@ export function initializeWebSocket(httpServer) {
         socket.emit('error', { message: 'Failed to check pet health' });
       }
     });
-
+ */
     // 5. Déconnexion
     socket.on('disconnect', () => {
       console.log(`❌ User disconnected: ${socket.userName}`);

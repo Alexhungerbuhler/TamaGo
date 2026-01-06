@@ -7,16 +7,19 @@
     <div :class="$style.topStatsContainer">
       <div 
         v-for="(icon, index) in topIcons"
-        :key="index"
-        :class="[$style.topStatItem, { [$style.blinking]: selectedIconIndex === index }]"
+        :key="icon.id"
+        :class="[$style.topStatItem, { [$style.blinking]: selectedIcon?.id === icon.id }]"
       >
-        <img :class="$style.topIcon" :src="icon.src" :alt="icon.label" :title="icon.label" />
-        <b :class="$style.topLabel">{{ icon.label }}</b>
-        <!-- Gauge for stat value -->
-        <div :class="$style.gaugeContainer">
-          <div :class="$style.gauge" :style="{ width: getStatValue(icon.label) + '%' }"></div>
+        <div :class="$style.iconWrapper">
+          <div 
+            :class="$style.topIcon"
+            :style="{ 
+              backgroundColor: getStatColor(getStatValue(icon.label))
+            }"
+            :data-icon="icon.src"
+          ></div>
         </div>
-        <span :class="$style.statValue">{{ getStatValue(icon.label) }}</span>
+        <b :class="[$style.topLabel, { [$style.colorGreen]: getStatValue(icon.label) >= 75, [$style.colorOrange]: getStatValue(icon.label) >= 35 && getStatValue(icon.label) < 75, [$style.colorRed]: getStatValue(icon.label) < 35 }]">{{ icon.label }}</b>
       </div>
     </div>
    
@@ -25,8 +28,8 @@
     <div :class="$style.groupParent">
       <div 
         v-for="(icon, index) in bottomIcons"
-        :key="index"
-        :class="[$style.navItem, { [$style.blinking]: selectedBottomIndex === index }]"
+        :key="icon.id"
+        :class="[$style.navItem, { [$style.blinking]: selectedIcon?.id === icon.id }]"
       >
         <img :class="$style.navIcon" :src="icon.src" :alt="icon.label" :title="icon.label" />
         <b :class="$style.navLabel">{{ icon.label }}</b>
@@ -34,18 +37,17 @@
     </div>
     
     <!-- Main content icons (can be replaced with actual images) -->
-    <div :class="$style.eggPlaceholder" @click="handleEggClick">
+    <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translateX(${petPositionX}px)` }">
       <img v-if="!isHatched" src="/Eggs/egg.svg" alt="Egg" title="Egg" :class="{ [$style.shake]: isShaking }" />
       <img v-else :src="hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
     </div>
 
-    <!-- Pet name -->
-    <b :class="$style.petName">{{ currentPet?.name || 'Tamagotchi' }}</b>
+    <!-- Pet name - shown above hatched pet -->
+    <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
       <span v-if="!isHatched">Click {{ clicksNeeded - clickCount }} times<br/>to hatch the egg</span>
-      <span v-else>🎉 Pet hatched!</span>
     </b>
     
     <!-- Navigation arrows -->
@@ -76,6 +78,32 @@ const isHatched = ref(false);
 const hatchedPetImage = ref('');
 const isShaking = ref(false);
 
+// Pet movement system
+const petPositionX = ref(0); // Position in pixels (-100 to 100)
+const petMovementInterval = ref(null);
+
+// Start random pet movement
+const startPetMovement = () => {
+  if (petMovementInterval.value) {
+    clearInterval(petMovementInterval.value);
+  }
+  
+  petMovementInterval.value = setInterval(() => {
+    if (isHatched.value) {
+      // Generate random movement between -80 and 80 pixels
+      const randomMovement = Math.random() * 160 - 80; // -80 to 80
+      petPositionX.value = randomMovement;
+    }
+  }, 2000); // Change position every 2 seconds
+};
+
+// Stop pet movement
+const stopPetMovement = () => {
+  if (petMovementInterval.value) {
+    clearInterval(petMovementInterval.value);
+    petMovementInterval.value = null;
+  }
+};
 // Available pet images for hatching
 const availablePets = [
   '/Pets/buisson 1.svg',
@@ -90,6 +118,24 @@ const availablePets = [
 // Get random pet image
 const getRandomPet = () => {
   return availablePets[Math.floor(Math.random() * availablePets.length)];
+};
+
+// Load hatched pet from localStorage if it exists
+const loadHatchedPet = () => {
+  const saved = localStorage.getItem('hatched_pet_image');
+  if (saved) {
+    isHatched.value = true;
+    hatchedPetImage.value = saved;
+    clickCount.value = clicksNeeded; // Mark as hatched
+    console.log('Loaded hatched pet:', hatchedPetImage.value);
+    // Start movement for loaded pet
+    startPetMovement();
+  }
+};
+
+// Save hatched pet to localStorage
+const saveHatchedPet = () => {
+  localStorage.setItem('hatched_pet_image', hatchedPetImage.value);
 };
 
 // Handle egg click - increment click count and check for hatching
@@ -108,7 +154,11 @@ const handleEggClick = () => {
 const hatchEgg = () => {
   isHatched.value = true;
   hatchedPetImage.value = getRandomPet();
+  saveHatchedPet();
   console.log('Egg hatched! Pet:', hatchedPetImage.value);
+  
+  // Start pet movement
+  startPetMovement();
 };
 
 // Reset egg (for testing or to hatch again)
@@ -116,6 +166,9 @@ const resetEgg = () => {
   isHatched.value = false;
   hatchedPetImage.value = '';
   clickCount.value = 0;
+  petPositionX.value = 0;
+  localStorage.removeItem('hatched_pet_image');
+  stopPetMovement();
 };
 
 // Device shake detection for mobile
@@ -133,43 +186,67 @@ const handleDeviceShake = () => {
 };
 
 // Navigation functions (defined first so they can be referenced in allIcons)
-const goToProfile = () => router.push('/profile');
-const goToMap = () => router.push('/map');
-const go1v1 = () => router.push('/tamagotchi');
-const goToGames = () => router.push('/games');
+const goToProfile = () => {
+  console.log('Navigating to Profile');
+  router.push('/profile');
+};
+const goToMap = () => {
+  console.log('Navigating to Map');
+  router.push('/map');
+};
+const go1v1 = () => {
+  console.log('Navigating to 1v1');
+  router.push('/tamagotchi');
+};
+const goToGames = () => {
+  console.log('Navigating to Games');
+  router.push('/games');
+};
 
 // All icons in circular navigation order (top then bottom)
 const allIcons = ref([
-  // Top icons
-  { label: 'Hunger', src: '/icons/Group-1.svg', section: 'top', key: 'hunger' },
-  { label: 'Hygiene', src: '/icons/health-stool--Streamline-Pixel.svg', section: 'top', key: 'hygiene' },
-  { label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top', key: 'fun' },
-  { label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top', key: 'energy' },
-  // Bottom icons
-  { label: 'Profile', src: '/icons/Group.svg', section: 'bottom', action: goToProfile },
-  { label: 'Map', src: '/icons/map-navigation-location-focus.svg', section: 'bottom', action: goToMap },
-  { label: '1v1', src: '/icons/Group-1.svg', section: 'bottom', action: go1v1 },
-  { label: 'Games', src: '/icons/entertainment-events-hobbies-game-machines-arcade-1--Streamline-Pixel.svg', section: 'bottom', action: goToGames }
+  // Top icons (stat actions)
+  { id: 0, label: 'Hunger', src: '/icons/Group-1.svg', section: 'top', key: 'hunger' },
+  { id: 1, label: 'Hygiene', src: '/icons/health-stool--Streamline-Pixel.svg', section: 'top', key: 'hygiene' },
+  { id: 2, label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top', key: 'fun' },
+  { id: 3, label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top', key: 'energy' },
+  // Bottom icons (navigation)
+  { id: 4, label: 'Profile', src: '/icons/Group.svg', section: 'bottom', navFunc: goToProfile },
+  { id: 5, label: 'Map', src: '/icons/map-navigation-location-focus.svg', section: 'bottom', navFunc: goToMap },
+  { id: 6, label: '1v1', src: '/icons/Group-1.svg', section: 'bottom', navFunc: go1v1 },
+  { id: 7, label: 'Games', src: '/icons/entertainment-events-hobbies-game-machines-arcade-1--Streamline-Pixel.svg', section: 'bottom', navFunc: goToGames }
 ]);
 
 // Top icons list (derived from allIcons)
-const topIcons = computed(() => allIcons.value.slice(0, 4));
+const topIcons = computed(() => allIcons.value.filter(icon => icon.section === 'top'));
 
 // Bottom icons list (derived from allIcons)
-const bottomIcons = computed(() => allIcons.value.slice(4, 8));
+const bottomIcons = computed(() => allIcons.value.filter(icon => icon.section === 'bottom'));
+
+// Get selected icon by ID
+const selectedIcon = computed(() => {
+  return allIcons.value.find(icon => icon.id === selectedIconIndex.value) || allIcons.value[0];
+});
 
 // Get selected icon index in each section
-const selectedTopIndex = computed(() => selectedIconIndex.value < 4 ? selectedIconIndex.value : -1);
-const selectedBottomIndex = computed(() => selectedIconIndex.value >= 4 ? selectedIconIndex.value - 4 : -1);
+const selectedTopIndex = computed(() => {
+  const icon = selectedIcon.value;
+  return icon?.section === 'top' ? topIcons.value.findIndex(i => i.id === icon.id) : -1;
+});
+
+const selectedBottomIndex = computed(() => {
+  const icon = selectedIcon.value;
+  return icon?.section === 'bottom' ? bottomIcons.value.findIndex(i => i.id === icon.id) : -1;
+});
 
 // Handle left arrow - go left (previous icon in circular loop)
 const handleLeftArrow = () => {
-  selectedIconIndex.value = (selectedIconIndex.value - 1 + allIcons.value.length) % allIcons.value.length;
+  selectedIconIndex.value = (selectedIconIndex.value - 1 + 8) % 8;
 };
 
 // Handle right arrow - go right (next icon in circular loop)
 const handleRightArrow = () => {
-  selectedIconIndex.value = (selectedIconIndex.value + 1) % allIcons.value.length;
+  selectedIconIndex.value = (selectedIconIndex.value + 1) % 8;
 };
 
 // Get stat value for a given stat name
@@ -183,48 +260,62 @@ const getStatValue = (statName) => {
   return Math.max(0, Math.min(100, value));
 };
 
-// Get current selected icon
-const currentSelectedIcon = computed(() => {
-  return allIcons.value[selectedIconIndex.value];
-});
+// Get stat color based on value
+const getStatColor = (value) => {
+  if (value >= 75) return '#6bcf7f'; // Green
+  if (value >= 35) return '#ffd93d'; // Orange
+  return '#ff6b6b'; // Red
+};
 
 // Handle USE button - execute pet action based on currently selected icon
 const handleUse = async () => {
-  const icon = currentSelectedIcon.value;
+  const icon = selectedIcon.value;
   
-  if (!icon || !currentPet.value?._id) return;
+  if (!icon) {
+    console.log('No icon selected');
+    return;
+  }
   
-  try {
-    const petId = currentPet.value._id;
-    
-    // Map icons to pet actions based on their key
-    switch(icon.key) {
-      case 'hunger':
-        await petsStore.feedPet(petId);
-        console.log('Hunger action: Pet fed');
-        break;
-      case 'hygiene':
-        await petsStore.toiletPet(petId);
-        console.log('Hygiene action: Pet cleaned');
-        break;
-      case 'fun':
-        await petsStore.playWithPet(petId);
-        console.log('Fun action: Pet played with');
-        break;
-      case 'energy':
-        await petsStore.sleepPet(petId);
-        console.log('Energy action: Pet slept');
-        break;
-      default:
-        console.log('No action available for this icon');
+  console.log('USE button pressed for:', icon.label);
+  
+  // For navigation icons, execute the navigation function
+  if (icon.section === 'bottom' && icon.navFunc) {
+    console.log('Executing navigation for:', icon.label);
+    icon.navFunc();
+    return;
+  }
+  
+  // For stat icons, execute pet action
+  if (icon.section === 'top' && currentPet.value?._id) {
+    try {
+      const petId = currentPet.value._id;
+      
+      switch(icon.key) {
+        case 'hunger':
+          console.log('Executing hunger action');
+          await petsStore.feedPet(petId);
+          break;
+        case 'hygiene':
+          console.log('Executing hygiene action');
+          await petsStore.toiletPet(petId);
+          break;
+        case 'fun':
+          console.log('Executing fun action');
+          await petsStore.playWithPet(petId);
+          break;
+        case 'energy':
+          console.log('Executing energy action');
+          await petsStore.sleepPet(petId);
+          break;
+      }
+      
+      // Refresh pet data to update gauges
+      await petsStore.fetchPet(petId);
+      currentPet.value = petsStore.currentPet;
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'exécution de l\'action:', error);
     }
-    
-    // Refresh pet data to update gauges
-    await petsStore.fetchPet(petId);
-    currentPet.value = petsStore.currentPet;
-    
-  } catch (error) {
-    console.error('Erreur lors de l\'exécution de l\'action:', error);
   }
 };
 
@@ -238,6 +329,9 @@ onMounted(async () => {
   } catch (error) {
     console.error('Erreur lors du chargement du pet:', error);
   }
+  
+  // Load hatched pet from localStorage if it exists
+  loadHatchedPet();
   
   // Setup device shake listener for mobile
   let lastShakeTime = 0;
@@ -280,6 +374,7 @@ onMounted(async () => {
   // Cleanup
   return () => {
     window.removeEventListener('devicemotion', onDeviceMotion);
+    stopPetMovement();
   };
 });
 </script>
@@ -312,8 +407,45 @@ onMounted(async () => {
   position: relative;
   width: 32px;
   height: 32px;
-  object-fit: contain;
   flex-shrink: 0;
+  transition: background-color 0.3s ease;
+  border-radius: 50%;
+}
+
+.topIcon[data-icon="/icons/Group-1.svg"] {
+  -webkit-mask-image: url('/icons/Group-1.svg');
+  mask-image: url('/icons/Group-1.svg');
+}
+
+.topIcon[data-icon="/icons/health-stool--Streamline-Pixel.svg"] {
+  -webkit-mask-image: url('/icons/health-stool--Streamline-Pixel.svg');
+  mask-image: url('/icons/health-stool--Streamline-Pixel.svg');
+}
+
+.topIcon[data-icon="/icons/entertainment-events-hobbies-popcorn.svg"] {
+  -webkit-mask-image: url('/icons/entertainment-events-hobbies-popcorn.svg');
+  mask-image: url('/icons/entertainment-events-hobbies-popcorn.svg');
+}
+
+.topIcon[data-icon="/icons/ecology-clean-battery.svg"] {
+  -webkit-mask-image: url('/icons/ecology-clean-battery.svg');
+  mask-image: url('/icons/ecology-clean-battery.svg');
+}
+
+.topIcon {
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .topStatsContainer {
@@ -464,11 +596,11 @@ onMounted(async () => {
 .groupParent {
   position: absolute;
   top: 700px;
-  left: calc(50% - 180px);
+  left: calc(50% - 160px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 80px;
+  gap: 60px;
   flex-shrink: 0;
 }
 
@@ -585,6 +717,7 @@ onMounted(async () => {
   justify-content: center;
   font-size: 120px;
   flex-shrink: 0;
+  transition: transform 0.5s ease-in-out;
 }
 
 .petName {
@@ -598,6 +731,7 @@ onMounted(async () => {
   white-space: nowrap;
   flex-shrink: 0;
   z-index: 1;
+  transition: transform 0.5s ease-in-out;
 }
 
 .energyPlaceholder {
@@ -781,30 +915,7 @@ onMounted(async () => {
   transition: transform 0.2s;
 }
 
-/* Gauge styles */
-.gaugeContainer {
-  width: 50px;
-  height: 8px;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid #000;
-  margin-top: 4px;
-}
-
-.gauge {
-  height: 100%;
-  background: linear-gradient(to right, #ff6b6b, #ffd93d, #6bcf7f);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.statValue {
-  font-size: 10px;
-  font-weight: 600;
-  color: #000;
-  margin-top: 2px;
-}
+/* Icon color styles */
 
 /* Egg hatching styles */
 @keyframes shake {
@@ -818,8 +929,8 @@ onMounted(async () => {
 }
 
 .hatchedPet {
-  width: 150px !important;
-  height: 150px !important;
+  width: 350px !important;
+  height: 350px !important;
   object-fit: contain;
   animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }

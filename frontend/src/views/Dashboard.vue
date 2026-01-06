@@ -61,8 +61,8 @@ function continueGame() {
 }
 
 function startNewGame() {
-  // Rediriger vers la liste des tamagotchis pour en créer un nouveau
-  router.push('/tamagotchis');
+  // Rediriger vers la page de création d'un nouveau tamagotchi
+  router.push('/tamago');
 }
 
 async function logout() {

@@ -37,13 +37,13 @@
     </div>
     
     <!-- Main content icons (can be replaced with actual images) -->
-    <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translateX(${petPositionX}px)` }">
+    <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">
       <img v-if="!isHatched" src="/Eggs/egg.svg" alt="Egg" title="Egg" :class="{ [$style.shake]: isShaking }" />
       <img v-else :src="hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
     </div>
 
     <!-- Pet name - shown above hatched pet -->
-    <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
+    <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
@@ -80,9 +80,10 @@ const isShaking = ref(false);
 
 // Pet movement system
 const petPositionX = ref(0); // Position in pixels (-100 to 100)
+const petPositionY = ref(0); 
 const petMovementInterval = ref(null);
 
-// Start random pet movement
+// Start random pet movement (calm and slow, like walking)
 const startPetMovement = () => {
   if (petMovementInterval.value) {
     clearInterval(petMovementInterval.value);
@@ -90,11 +91,12 @@ const startPetMovement = () => {
   
   petMovementInterval.value = setInterval(() => {
     if (isHatched.value) {
-      // Generate random movement between -80 and 80 pixels
-      const randomMovement = Math.random() * 160 - 80; // -80 to 80
+      // Generate small random movement between -60 and 60 pixels (smaller steps)
+      const randomMovement = Math.random() * 80 - 60; // -20 to 80
+      petPositionY.value = randomMovement;
       petPositionX.value = randomMovement;
     }
-  }, 2000); // Change position every 2 seconds
+  }, 3000); // Change position every 3 seconds (slower)
 };
 
 // Stop pet movement
@@ -167,6 +169,7 @@ const resetEgg = () => {
   hatchedPetImage.value = '';
   clickCount.value = 0;
   petPositionX.value = 0;
+  petPositionY.value = 0;
   localStorage.removeItem('hatched_pet_image');
   stopPetMovement();
 };

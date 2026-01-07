@@ -8,6 +8,7 @@ import cors from 'cors';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import swaggerUi from 'swagger-ui-express';
+import { Server } from 'socket.io';
 
 import apiRouter from './routes/api.js';
 
@@ -23,6 +24,7 @@ mongoose.connect(process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/tamago')
 
 const app = express();
 const httpServer = http.createServer(app);
+const io = new Server(httpServer, { /* options */ });
 
 // CORS (optionnel si front et back même domaine sur Render)
 app.use(cors({
@@ -55,5 +57,9 @@ if (!process.env.JEST_WORKER_ID) {
   httpServer.listen(port, () => console.log(`HTTP server listening on ${port}`));
   // wsServer.start({ server: httpServer }); // décommente si tu as un wsServer
 }
+
+io.on('connection', (socket) => {
+  // Gérer la connexion WebSocket
+});
 
 export default app;

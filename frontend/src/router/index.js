@@ -10,6 +10,7 @@ import TamagotchiView from '../views/TamagotchiView.vue';
 import Profile from '../views/Profile.vue';
 import Register from '../views/Register.vue';
 import MapView from '../views/MapView.vue';
+import Games from '../views/Games.vue';
 
 import ApiTestPanel from '../components/ApiTestPanel.vue';
 
@@ -24,6 +25,7 @@ const routes = [
   { path: '/tamagotchi/:id?', name: 'TamagotchiView', component: TamagotchiView, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/map', name: 'MapView', component: MapView, meta: { requiresAuth: true } },
+  { path: '/games', name: 'Games', component: Games, meta: { requiresAuth: true } },
   { path: '/test-api', name: 'ApiTest', component: ApiTestPanel }
 ];
 

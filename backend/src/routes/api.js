@@ -14,6 +14,7 @@ import {
   toiletPet,
   updatePet,
 } from "../api/pets.js";
+import { getGame, listGames, playGame } from "../api/games.js";
 import { getGlobalStats, getUserStats } from "../api/stats.js";
 import { manualTick } from "../api/tick.js";
 import {
@@ -58,6 +59,11 @@ router.get("/pets/:id/stats", getPetStats);
 // Pet uploads (images)
 router.post("/pets/:id/image", authenticate, upload.single("image"), uploadPetImage);
 router.delete("/pets/:id/image", authenticate, deletePetImage);
+
+// Games
+router.get("/games", listGames);                               // GET /api/games (list all games)
+router.get("/games/:gameId", getGame);                         // GET /api/games/:gameId (get game details)
+router.post("/pets/:id/play-game", authenticate, playGame);    // POST /api/pets/:id/play-game (play a game)
 
 // World / map
 router.get("/world/map", getWorldMap);

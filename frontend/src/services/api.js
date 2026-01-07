@@ -221,6 +221,36 @@ export const worldService = {
 };
 
 // ============================================
+// Services Games
+// ============================================
+export const gamesService = {
+  /**
+   * Récupérer la liste de tous les jeux disponibles
+   */
+  list() {
+    return apiClient.get('/games');
+  },
+
+  /**
+   * Récupérer les détails d'un jeu spécifique
+   * @param {string} gameId - ID du jeu
+   */
+  getGame(gameId) {
+    return apiClient.get(`/games/${gameId}`);
+  },
+
+  /**
+   * Jouer à un jeu avec un pet
+   * @param {string} petId - ID du pet
+   * @param {string} gameId - ID du jeu
+   * @param {number} score - Score obtenu (optionnel)
+   */
+  playGame(petId, gameId, score = 0) {
+    return apiClient.post(`/pets/${petId}/play-game`, { gameId, score });
+  }
+};
+
+// ============================================
 // Services Users (uploads avatar)
 // ============================================
 export const usersService = {

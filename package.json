@@ -5,7 +5,7 @@
   "description": "TamaGo - Application complète avec backend et frontend",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "cd frontend && npm run build",
     "preview": "vite preview",
     "backend": "nodemon --env-file=.env server/app.mjs"
   },

@@ -13,9 +13,10 @@
         <div :class="$style.iconWrapper">
           <!-- Jauge colorée en arrière-plan -->
           <img 
-            :class="$style.gaugeIcon"
+            :class="[$style.gaugeIcon, { [$style.gaugeRouge]: getStatValue(icon.label) < 25 }]"
             :src="getGaugeImage(getStatValue(icon.label))"
             :alt="`Gauge for ${icon.label}`"
+            :style="getGaugeStyle(getStatValue(icon.label))"
           />
           <!-- Icône principale en noir par dessus -->
           <img 
@@ -74,7 +75,7 @@ import { usePetsStore } from '../store/pets';
 const router = useRouter();
 const petsStore = usePetsStore();
 const selectedIconIndex = ref(0);
-const currentPet = ref(null);
+const currentPet = computed(() => petsStore.currentPet);
 
 // Egg hatching system
 const clickCount = ref(0);
@@ -158,11 +159,37 @@ const handleEggClick = () => {
 };
 
 // Hatch the egg
-const hatchEgg = () => {
+const hatchEgg = async () => {
   isHatched.value = true;
   hatchedPetImage.value = getRandomPet();
   saveHatchedPet();
   console.log('Egg hatched! Pet:', hatchedPetImage.value);
+  
+  // Create a pet in the database if none exists
+  try {
+    // Check if we already have a pet
+    await petsStore.fetchPets({ limit: 1 });
+    
+    if (petsStore.petsList.length === 0) {
+      // No pet exists, create one
+      console.log('Creating new pet in database...');
+      const newPet = await petsStore.createPet({
+        name: 'My Tamagotchi',
+        lat: 0,
+        lng: 0
+      });
+      console.log('Pet created:', newPet);
+      
+      // Load the newly created pet
+      await petsStore.fetchPet(newPet._id);
+    } else {
+      // Pet already exists, just load it
+      console.log('Loading existing pet...');
+      await petsStore.fetchPet(petsStore.petsList[0]._id);
+    }
+  } catch (error) {
+    console.error('Error creating/loading pet:', error);
+  }
   
   // Start pet movement
   startPetMovement();
@@ -283,6 +310,43 @@ const getGaugeImage = (value) => {
   return '/icons/Icon_JaugeRouge.svg'; // Red
 };
 
+// Get gauge style based on stat value (Orange est la référence parfaite)
+const getGaugeStyle = (value) => {
+  // Jauge Rouge - left à 20% et top à 20%
+  if (value < 25) {
+    return { 
+      width: '60px', 
+      height: '60px', 
+      position: 'absolute', 
+      top: '0%',
+      left: '0%',
+      transform: 'translate(-50%, -50%)' 
+    };
+  }
+  
+  // Jauge Orange - left à 20%
+  if (value >= 25 && value < 50) {
+    return { 
+      width: '60px', 
+      height: '60px', 
+      position: 'absolute', 
+      top: '50%',
+      left: '20%',
+      transform: 'translate(-50%, -50%)' 
+    };
+  }
+  
+  // Toutes les autres jauges (jaune, verte) - left et top à 50%
+  return { 
+    width: '60px', 
+    height: '60px', 
+    position: 'absolute', 
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)' 
+  };
+};
+
 // Handle USE button - execute pet action based on currently selected icon
 const handleUse = async () => {
   const icon = selectedIcon.value;
@@ -293,6 +357,9 @@ const handleUse = async () => {
   }
   
   console.log('USE button pressed for:', icon.label);
+  console.log('Icon section:', icon.section);
+  console.log('Current pet:', currentPet.value);
+  console.log('Current pet ID:', currentPet.value?._id);
   
   // For navigation icons, execute the navigation function
   if (icon.section === 'bottom' && icon.navFunc) {
@@ -306,28 +373,44 @@ const handleUse = async () => {
     try {
       const petId = currentPet.value._id;
       
+      console.log('Before action - Current stats:', {
+        hunger: currentPet.value.hunger,
+        hygiene: currentPet.value.hygiene,
+        energy: currentPet.value.energy
+      });
+      
+      let result;
       switch(icon.key) {
         case 'hunger':
           console.log('Executing hunger action');
-          await petsStore.feedPet(petId);
+          result = await petsStore.feedPet(petId);
+          console.log('Feed result:', result);
           break;
         case 'hygiene':
           console.log('Executing hygiene action');
-          await petsStore.toiletPet(petId);
+          result = await petsStore.toiletPet(petId);
+          console.log('Toilet result:', result);
           break;
         case 'fun':
           console.log('Executing fun action');
-          await petsStore.playWithPet(petId);
+          result = await petsStore.playWithPet(petId);
+          console.log('Play result:', result);
           break;
         case 'energy':
           console.log('Executing energy action');
-          await petsStore.sleepPet(petId);
+          result = await petsStore.sleepPet(petId);
+          console.log('Sleep result:', result);
           break;
       }
       
       // Refresh pet data to update gauges
       await petsStore.fetchPet(petId);
-      currentPet.value = petsStore.currentPet;
+      
+      console.log('After refresh - Current stats:', {
+        hunger: currentPet.value.hunger,
+        hygiene: currentPet.value.hygiene,
+        energy: currentPet.value.energy
+      });
       
     } catch (error) {
       console.error('Erreur lors de l\'exécution de l\'action:', error);
@@ -338,9 +421,16 @@ const handleUse = async () => {
 // Fetch the first pet's data on component mount
 onMounted(async () => {
   try {
+    console.log('Fetching pets...');
     await petsStore.fetchPets({ limit: 1 });
+    console.log('Pets list:', petsStore.petsList);
+    
     if (petsStore.petsList.length > 0) {
-      currentPet.value = petsStore.petsList[0];
+      console.log('Loading pet:', petsStore.petsList[0]);
+      await petsStore.fetchPet(petsStore.petsList[0]._id);
+      console.log('Current pet loaded:', petsStore.currentPet);
+    } else {
+      console.warn('No pets found in the list');
     }
   } catch (error) {
     console.error('Erreur lors du chargement du pet:', error);
@@ -433,14 +523,25 @@ onMounted(async () => {
 
 .gaugeIcon {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
-  object-fit: contain;
+  object-fit: fill;
   z-index: 1;
-  top: calc(50% - 15px);
-  left: calc(50% - 12px);
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.gaugeRouge {
+  width: 60px !important;
+  height: 60px !important;
+  max-width: 60px !important;
+  max-height: 60px !important;
+  min-width: 60px !important;
+  min-height: 60px !important;
+  object-fit: contain !important;
+  scale: 0.65;
 }
 
 .topIcon[data-icon="/icons/Group-1.svg"] {
@@ -497,7 +598,7 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .topLabel {
@@ -518,6 +619,10 @@ onMounted(async () => {
 }
 
 .blinking .topIcon {
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+.blinking .navIcon {
   animation: blink 1.2s ease-in-out infinite;
 }
 
@@ -642,25 +747,14 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.navItem:hover {
-  transform: scale(1.1);
+  pointer-events: none;
 }
 
 .navIcon {
   height: 32px;
   width: 32px;
   position: relative;
-  cursor: pointer;
-  transition: transform 0.2s;
   object-fit: contain;
-}
-
-.navIcon:hover {
-  transform: scale(1.2);
 }
 
 .navLabel {
@@ -917,6 +1011,7 @@ onMounted(async () => {
   height: 193px;
   flex-shrink: 0;
   font-size: 24px;
+  cursor: pointer;
 }
 
 .pixilFrame01Icon {

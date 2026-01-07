@@ -209,7 +209,7 @@ export async function feedPet(req, res, next) {
     }
     
     const updated = await updateStats(req.params.id, req.user._id, (pet) => {
-      pet.hunger += 30;
+      pet.hunger += 25;
     });
     
     if (!updated) return res.sendStatus(404);
@@ -230,7 +230,7 @@ export async function toiletPet(req, res, next) {
     }
     
     const updated = await updateStats(req.params.id, req.user._id, (pet) => {
-      pet.hygiene = MAX_STAT;
+      pet.hygiene += 25;
     });
     
     if (!updated) return res.sendStatus(404);
@@ -251,7 +251,7 @@ export async function sleepPet(req, res, next) {
     }
     
     const updated = await updateStats(req.params.id, req.user._id, (pet) => {
-      pet.energy += 40;
+      pet.energy += 25;
       pet.hunger -= 10;
     });
     

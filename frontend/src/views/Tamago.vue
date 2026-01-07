@@ -11,13 +11,18 @@
         :class="[$style.topStatItem, { [$style.blinking]: selectedIcon?.id === icon.id }]"
       >
         <div :class="$style.iconWrapper">
-          <div 
+          <!-- Jauge colorée en arrière-plan -->
+          <img 
+            :class="$style.gaugeIcon"
+            :src="getGaugeImage(getStatValue(icon.label))"
+            :alt="`Gauge for ${icon.label}`"
+          />
+          <!-- Icône principale en noir par dessus -->
+          <img 
             :class="$style.topIcon"
-            :style="{ 
-              backgroundColor: getStatColor(getStatValue(icon.label))
-            }"
-            :data-icon="icon.src"
-          ></div>
+            :src="icon.src"
+            :alt="icon.label"
+          />
         </div>
         <b :class="[$style.topLabel, { [$style.colorGreen]: getStatValue(icon.label) >= 75, [$style.colorOrange]: getStatValue(icon.label) >= 35 && getStatValue(icon.label) < 75, [$style.colorRed]: getStatValue(icon.label) < 35 }]">{{ icon.label }}</b>
       </div>
@@ -270,6 +275,14 @@ const getStatColor = (value) => {
   return '#ff6b6b'; // Red
 };
 
+// Get gauge image based on stat value
+const getGaugeImage = (value) => {
+  if (value >= 75) return '/icons/Icon_JaugeVerte.svg'; // Green
+  if (value >= 50) return '/icons/Icon_JaugeJaune.svg'; // Yellow
+  if (value >= 25) return '/icons/Icon_JaugeOrange.svg'; // Orange
+  return '/icons/Icon_JaugeRouge.svg'; // Red
+};
+
 // Handle USE button - execute pet action based on currently selected icon
 const handleUse = async () => {
   const icon = selectedIcon.value;
@@ -407,12 +420,27 @@ onMounted(async () => {
 }
 
 .topIcon {
-  position: relative;
+  position: absolute;
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  transition: background-color 0.3s ease;
-  border-radius: 50%;
+  object-fit: contain;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gaugeIcon {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  object-fit: contain;
+  z-index: 1;
+  top: calc(50% - 15px);
+  left: calc(50% - 12px);
+  transform: translate(-50%, -50%);
 }
 
 .topIcon[data-icon="/icons/Group-1.svg"] {
@@ -449,12 +477,14 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 48px;
+  height: 48px;
 }
 
 .topStatsContainer {
   position: absolute;
   top: 70px;
-  left: calc(50% - 160px);
+  left: calc(50% - 170px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -466,7 +496,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 15px;
   cursor: pointer;
 }
 
@@ -487,7 +517,7 @@ onMounted(async () => {
   }
 }
 
-.blinking {
+.blinking .topIcon {
   animation: blink 1.2s ease-in-out infinite;
 }
 

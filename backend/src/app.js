@@ -1,52 +1,79 @@
+import 'dotenv/config';
+import express from 'express';
+import http from 'http';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import swaggerUi from 'swagger-ui-express';
 
-import express from "express";
-import logger from "morgan";
-import mongoose from "mongoose";
-import cors from "cors";
+import apiRouter from './routes/api.js';
+// import { wsServer } from './store/wsStore.mjs'; // décommente si tu as un wsServer
+// import Admin from './models/admin.js'; // décommente si tu veux l'admin auto
 
-import * as config from "../config.js";
-import apiRouter from "./routes/api.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-mongoose
-  .connect(config.databaseUrl)
+// Connexion MongoDB
+mongoose.connect(process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/tamago')
   .then(async () => {
-    if (process.env.NODE_ENV !== "test") {
-      console.log("Mongoose connected to", mongoose.connection.name);
-    }
+    console.log('Connected to MongoDB');
+    // // Création admin auto (optionnel)
+    // if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
+    //   try {
+    //     const existingAdmin = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
+    //     if (!existingAdmin) {
+    //       const admin = new Admin({
+    //         email: process.env.ADMIN_EMAIL,
+    //         password: process.env.ADMIN_PASSWORD,
+    //         name: process.env.ADMIN_NAME || 'Administrator',
+    //         role: 'admin'
+    //       });
+    //       await admin.save();
+    //       console.log('Admin créé automatiquement');
+    //     }
+    //   } catch (err) {
+    //     console.error('Erreur création admin:', err.message);
+    //   }
+    // }
   })
-  .catch((err) => {
-    console.error("Unable to connect to MongoDB:", err);
-  });
+  .catch(err => console.error("MongoDB connection error:", err));
 
 const app = express();
+const httpServer = http.createServer(app);
 
-if (process.env.NODE_ENV !== "test") {
-  app.use(logger("dev"));
-}
-
-mongoose.connection.on("error", (err) => {
-  console.error("Mongoose connection error:", err);
-});
-
-mongoose.connection.on("disconnected", () => {
-  console.log("Mongoose disconnected");
-});
-
-// Configuration CORS
+// CORS (optionnel si front et back même domaine sur Render)
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || true,
   credentials: true
 }));
 
-app
-  .use(express.json())
-  .use(express.urlencoded({ extended: false }));
+// Swagger (optionnel)
+if (fs.existsSync('./openapi.yml')) {
+  const openApiDocument = yaml.load(fs.readFileSync('./openapi.yml', 'utf8'));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
+}
 
-app.use("/api", apiRouter);
+app.use(express.json());
+app.use('/api', apiRouter);
 
-// basic 404 handler
-app.use(function (req, res) {
-  res.status(404).send("Not Found");
+// Servir le frontend (build Vite)
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Fallback SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
+
+// Port Render
+const port = process.env.PORT || 8989;
+
+// Lancer le serveur HTTP (et WebSocket si besoin)
+if (!process.env.JEST_WORKER_ID) {
+  httpServer.listen(port, () => console.log(`HTTP server listening on ${port}`));
+  // wsServer.start({ server: httpServer }); // décommente si tu as un wsServer
+}
 
 export default app;

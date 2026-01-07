@@ -10,8 +10,6 @@ import yaml from 'js-yaml';
 import swaggerUi from 'swagger-ui-express';
 
 import apiRouter from './routes/api.js';
-// import { wsServer } from './store/wsStore.mjs'; // décommente si tu as un wsServer
-// import Admin from './models/admin.js'; // décommente si tu veux l'admin auto
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,24 +18,6 @@ const __dirname = path.dirname(__filename);
 mongoose.connect(process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/tamago')
   .then(async () => {
     console.log('Connected to MongoDB');
-    // // Création admin auto (optionnel)
-    // if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD) {
-    //   try {
-    //     const existingAdmin = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
-    //     if (!existingAdmin) {
-    //       const admin = new Admin({
-    //         email: process.env.ADMIN_EMAIL,
-    //         password: process.env.ADMIN_PASSWORD,
-    //         name: process.env.ADMIN_NAME || 'Administrator',
-    //         role: 'admin'
-    //       });
-    //       await admin.save();
-    //       console.log('Admin créé automatiquement');
-    //     }
-    //   } catch (err) {
-    //     console.error('Erreur création admin:', err.message);
-    //   }
-    // }
   })
   .catch(err => console.error("MongoDB connection error:", err));
 
@@ -62,8 +42,8 @@ app.use('/api', apiRouter);
 // Servir le frontend (build Vite)
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// Fallback SPA
-app.get((req, res) => {
+// Fallback SPA (toutes les routes non-API renvoient index.html)
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 

@@ -24,5 +24,9 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      outDir: '../backend/dist', // build du front dans le dossier public du back
+      emptyOutDir: true
+    }
   };
 });

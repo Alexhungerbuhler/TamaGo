@@ -444,6 +444,133 @@ Authorization: Bearer {token}
 
 ---
 
+### 🎮 Jeux (Games)
+
+#### Lister les Jeux Disponibles
+```http
+GET /api/games
+```
+
+**Réponse (200):**
+```json
+{
+  "games": [
+    {
+      "id": "memory-game",
+      "name": "Memory Game",
+      "description": "Test your memory by matching pairs of cards!",
+      "icon": "🧠",
+      "funBonus": 20,
+      "energyCost": 10,
+      "hungerCost": 5,
+      "difficulty": "easy"
+    },
+    {
+      "id": "doodle-jump",
+      "name": "Doodle Jump",
+      "description": "Jump as high as you can without falling!",
+      "icon": "🦘",
+      "funBonus": 25,
+      "energyCost": 15,
+      "hungerCost": 8,
+      "difficulty": "medium"
+    },
+    {
+      "id": "catch-game",
+      "name": "Catch the Stars",
+      "description": "Catch falling stars to earn points!",
+      "icon": "⭐",
+      "funBonus": 18,
+      "energyCost": 12,
+      "hungerCost": 6,
+      "difficulty": "easy"
+    },
+    {
+      "id": "puzzle-game",
+      "name": "Puzzle Master",
+      "description": "Solve puzzles to challenge your brain!",
+      "icon": "🧩",
+      "funBonus": 22,
+      "energyCost": 8,
+      "hungerCost": 4,
+      "difficulty": "hard"
+    }
+  ],
+  "count": 4
+}
+```
+
+#### Obtenir un Jeu Spécifique
+```http
+GET /api/games/{gameId}
+```
+
+**Réponse (200):**
+```json
+{
+  "id": "memory-game",
+  "name": "Memory Game",
+  "description": "Test your memory by matching pairs of cards!",
+  "icon": "🧠",
+  "funBonus": 20,
+  "energyCost": 10,
+  "hungerCost": 5,
+  "difficulty": "easy"
+}
+```
+
+**Codes d'erreur:**
+- `404`: Jeu non trouvé
+
+#### Jouer à un Jeu
+```http
+POST /api/pets/{id}/play-game
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "gameId": "memory-game",
+  "score": 85
+}
+```
+
+**Paramètres:**
+- `gameId` (string, required): ID du jeu
+- `score` (number, optional): Score obtenu (0-100)
+
+**Réponse (200):**
+```json
+{
+  "message": "Fluffy played Memory Game!",
+  "game": {
+    "id": "memory-game",
+    "name": "Memory Game"
+  },
+  "score": 85,
+  "stats": {
+    "fun": 95,
+    "energy": 65,
+    "hunger": 75,
+    "hygiene": 90
+  },
+  "changes": {
+    "fun": 20,
+    "energy": -10,
+    "hunger": -5
+  }
+}
+```
+
+**Codes d'erreur:**
+- `400`: Pas assez d'énergie pour jouer
+- `401`: Non authentifié
+- `403`: Vous n'êtes pas le propriétaire
+- `404`: Jeu ou pet non trouvé
+
+**Note:** Le score influence le bonus de fun (jusqu'à +50% avec un score élevé)
+
+---
+
 ### 🗺️ Monde
 
 #### Carte du Monde
@@ -548,10 +675,80 @@ Le projet inclut **17+ tests** couvrant :
 - ✅ Pagination et filtrage
 - ✅ Actions sur les pets
 - ✅ Statistiques (globales et utilisateur)
+- ✅ WebSocket (connexions, événements)
 
 Pour lancer les tests :
 ```bash
 npm test
+```
+
+---
+
+## 🔌 WebSocket (Real-time)
+
+Le serveur utilise Socket.io pour les mises à jour en temps réel.
+
+### Connexion
+```javascript
+// Client side
+const socket = io('http://localhost:3000', {
+  auth: {
+    token: 'your-jwt-token'
+  }
+});
+```
+
+### Événements Serveur → Client
+
+#### pet:updated
+Envoyé quand les stats d'un pet changent.
+```json
+{
+  "petId": "507f1f77bcf86cd799439011",
+  "stats": {
+    "fun": 85,
+    "energy": 65,
+    "hunger": 75,
+    "hygiene": 90
+  }
+}
+```
+
+#### pet:alert
+Alerte quand une stat devient basse (< 30).
+```json
+{
+  "petId": "507f1f77bcf86cd799439011",
+  "name": "Fluffy",
+  "message": "Fluffy has low hunger!",
+  "type": "hunger"
+}
+```
+
+#### pet:critical
+Alerte critique quand une stat devient très basse (< 10).
+```json
+{
+  "petId": "507f1f77bcf86cd799439011",
+  "name": "Fluffy",
+  "message": "Fluffy is in critical condition!",
+  "type": "health"
+}
+```
+
+#### game:completed
+Envoyé après avoir joué à un jeu.
+```json
+{
+  "petId": "507f1f77bcf86cd799439011",
+  "petName": "Fluffy",
+  "gameId": "memory-game",
+  "gameName": "Memory Game",
+  "funGained": 20,
+  "energyLost": 10,
+  "hungerLost": 5,
+  "score": 85
+}
 ```
 
 ---
@@ -602,24 +799,45 @@ npm test
 ### ✅ Fonctionnalités Implémentées
 
 - [x] **User registration & login** avec JWT
-- [x] **2+ types de ressources** (User, Tamagotchi)
+- [x] **3 types de ressources** (User, Tamagotchi, Games) liées entre elles
 - [x] **Authentification JWT** sur endpoints sensibles
 - [x] **Autorisation/Permissions** (ownership checks)
-- [x] **Pagination** (page, limit, total, pages)
-- [x] **Filtrage avancé** (level, stats, name, userId)
+- [x] **Pagination** (page, limit, total, pages) sur `/api/pets`
+- [x] **Filtrage avancé** (level, stats, name, userId) sur `/api/pets`
 - [x] **Agrégation MongoDB** (stats globales, par user, top users, distribution)
-- [x] **Géolocalisation** (2dsphere index, coordinates)
+- [x] **Géolocalisation** (2dsphere index, coordinates GeoJSON)
 - [x] **Upload d'images** (Cloudinary pour avatars et pets)
+- [x] **WebSocket real-time** (pet:updated, pet:alert, pet:critical, game:completed)
 - [x] **Tests automatisés** (17+ tests avec Vitest)
 - [x] **Documentation API complète** (ce README)
-- [x] **Code quality** (structure modulaire, gestion d'erreurs)
+- [x] **Code quality** (structure modulaire, gestion d'erreurs async/await)
+- [x] **Validations** (Mongoose validations, input validation)
+- [x] **Linked resources validation** (owner existence check)
+
+### 📊 Couverture des Critères COMEM+
+
+#### Obligatoires ✅
+1. ✅ User management (register, login)
+2. ✅ 3 ressources liées (User → Tamagotchi → Games)
+3. ✅ Pagination (GET /api/pets?page=1&limit=10)
+4. ✅ Filtres optionnels (minLevel, maxHunger, name, userId, etc.)
+5. ✅ Agrégation MongoDB (pipeline complexe dans /api/stats)
+6. ✅ Géolocalisation (location avec index 2dsphere)
+7. ✅ Images (upload avatar/pet avec Cloudinary)
+8. ✅ Authentification JWT + Authorization
+9. ✅ WebSocket real-time (Socket.io events)
+10. ✅ Tests automatisés (17+ tests reproductibles)
+11. ✅ Documentation complète (requests, responses, validation)
 
 ### 📈 Points Bonus Potentiels
 
-- Agrégations MongoDB complexes avec $lookup
-- Filtrage géospatial possible (infrastructure en place)
-- Upload d'images avec validation et limites
-- Tests couvrant authentification, autorisation, CRUD, agrégation
+- ✅ Agrégations MongoDB complexes avec $lookup et $group
+- ✅ Infrastructure géospatiale complète (2dsphere queries possibles)
+- ✅ Upload d'images avec validation et limites
+- ✅ Tests couvrant auth, CRUD, permissions, agrégation
+- ✅ Code modulaire et DRY (middlewares, utils)
+- ✅ WebSocket avec authentification
+- ✅ Validation des ressources liées (existence checks)
 
 ---
 

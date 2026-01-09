@@ -6,9 +6,9 @@
     <!-- Header -->
     <div :class="$style.header">
       <button :class="$style.backButton" @click="goBack">
-        ← Back
+        <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
       </button>
-      <h1 :class="$style.title">🎮 Memory Game</h1>
+      <h1 :class="$style.title">Memory Game</h1>
       <p :class="$style.subtitle">Find all the Tamagotchi pairs!</p>
     </div>
     
@@ -272,6 +272,10 @@ onMounted(async () => {
 .header {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -280,20 +284,31 @@ onMounted(async () => {
   position: absolute;
   top: 0;
   left: 0;
-  padding: 10px 20px;
+  padding: 0.5rem;
   background-color: #fff;
-  border: 3px solid #000;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
+  border: 4px solid #000;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Pixelify Sans', sans-serif;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
 }
 
 .backButton:hover {
-  background-color: #ffd93d;
-  transform: translateY(-2px);
+  transform: scale(1.05);
+}
+
+.backButton:active {
+  transform: scale(0.98);
+}
+
+.backIcon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .title {

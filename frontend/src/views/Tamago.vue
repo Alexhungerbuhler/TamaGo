@@ -357,7 +357,7 @@ const allIcons = ref([
   { id: 0, label: 'Hunger', src: '/icons/Group-1.svg', section: 'top', key: 'hunger' },
   { id: 1, label: 'Hygiene', src: '/icons/health-stool--Streamline-Pixel.svg', section: 'top', key: 'hygiene' },
   { id: 2, label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top', key: 'fun' },
-  { id: 3, label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top', key: 'energy' },
+  { id: 3, label: 'Energy', src: '/icons/EnergyIcon.svg', section: 'top', key: 'energy' },
   // Bottom icons (navigation)
   { id: 4, label: 'Map', src: '/icons/interface-essential-global-public--Streamline-Pixel.svg', section: 'bottom', navFunc: goToMap },
   { id: 5, label: 'Games', src: '/icons/entertainment-events-hobbies-game-machines-arcade-1--Streamline-Pixel.svg', section: 'bottom', navFunc: goToGames },
@@ -425,23 +425,11 @@ const getGaugeImage = (value) => {
 
 // Get gauge style based on stat value (Orange est la référence parfaite)
 const getGaugeStyle = (value) => {
-  // Jauge Rouge - left à 20% et top à 20%
-  if (value < 25) {
+  // Jauge Rouge (0-49)
+  if (value < 50) {
     return { 
       width: '60px', 
-      height: '60px', 
-      position: 'absolute', 
-      top: '0%',
-      left: '0%',
-      transform: 'translate(-50%, -50%)' 
-    };
-  }
-  
-  // Jauge Orange - left à 20%
-  if (value >= 25 && value < 50) {
-    return { 
-      width: '40px', 
-      height: '60px', 
+      height: '30px', 
       position: 'absolute', 
       top: '20%',
       left: '20%',
@@ -449,7 +437,31 @@ const getGaugeStyle = (value) => {
     };
   }
   
-  // Toutes les autres jauges (jaune, verte) - left et top à 50%
+  // Jauge Orange (50-74)
+  if (value >= 50 && value < 75) {
+    return { 
+      width: '60px', 
+      height: '60px', 
+      position: 'absolute', 
+      top: '50%',
+      left: '20%',
+      transform: 'translate(-50%, -50%)' 
+    };
+  }
+  
+  // Jauge Jaune (75-99)
+  if (value >= 75 && value < 100) {
+    return { 
+      width: '60px', 
+      height: '60px', 
+      position: 'absolute', 
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)' 
+    };
+  }
+  
+  // Jauge Verte (100)
   return { 
     width: '60px', 
     height: '60px', 

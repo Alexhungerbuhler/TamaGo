@@ -2,34 +2,28 @@
   <div v-if="isOpen" class="modal-overlay" @click.self="attemptClose">
     <div class="modal-container">
       <div class="modal-content">
-        <div class="pet-preview">
-          <div class="pet-emoji">🥚→✨</div>
-        </div>
+        <h2 class="title">Choose a name<br>for your pet:</h2>
         
-        <h2 class="title">Nommez votre Tamagotchi !</h2>
-        <p class="subtitle">Votre compagnon attend son nom</p>
+        <p v-if="validationError" class="field-error">
+          <img src="/icons/WarningIcon.svg" class="error-icon" alt="warning"> {{ validationError }}
+        </p>
+        <p v-else class="field-hint">
+          <img src="/icons/WarningIcon.svg" class="error-icon" alt="warning"> 3-20 caractères, lettres uniquement
+        </p>
 
         <form @submit.prevent="handleSubmit" class="form">
           <div class="form-field">
-            <label>
-              <input
-                v-model.trim="petName"
-                type="text"
-                placeholder="ex: Pixel"
-                autocomplete="off"
-                :class="{ 'input-error': validationError }"
-                :disabled="loading"
-                @input="validateName"
-                ref="nameInput"
-                maxlength="20"
-              />
-            </label>
-            <p v-if="validationError" class="field-error">
-              {{ validationError }}
-            </p>
-            <p v-else class="field-hint">
-              3-20 caractères, lettres uniquement
-            </p>
+            <input
+              v-model.trim="petName"
+              type="text"
+              placeholder="Enter a name..."
+              autocomplete="off"
+              :class="{ 'input-error': validationError }"
+              :disabled="loading"
+              @input="validateName"
+              ref="nameInput"
+              maxlength="20"
+            />
           </div>
 
           <button 
@@ -38,7 +32,7 @@
             class="submit-btn"
             :class="{ 'btn-disabled': !isNameValid }"
           >
-            {{ loading ? "✨ Création..." : "🚀 Valider" }}
+            {{ loading ? "Création..." : "Valider" }}
           </button>
         </form>
       </div>
@@ -140,7 +134,7 @@ watch(() => props.isOpen, (newVal) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,13 +153,13 @@ watch(() => props.isOpen, (newVal) => {
 
 .modal-container {
   width: 90%;
-  max-width: 400px;
+  max-width: 420px;
   animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
   from {
-    transform: translateY(50px);
+    transform: translateY(30px);
     opacity: 0;
   }
   to {
@@ -175,122 +169,112 @@ watch(() => props.isOpen, (newVal) => {
 }
 
 .modal-content {
-  background: #fff;
-  padding: 2rem 1.5rem;
-  border-radius: 20px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  padding: 2rem 2rem 2.5rem;
+  border: 5px solid #000000;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   text-align: center;
   font-family: 'Pixelify Sans', monospace;
-}
-
-.pet-preview {
-  margin-bottom: 1.5rem;
-}
-
-.pet-emoji {
-  font-size: 4rem;
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-15px) scale(1.1);
-  }
 }
 
 .title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 0.5rem;
+  color: #000000;
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
 }
 
-.subtitle {
-  color: #666;
+.field-error {
   margin: 0 0 1.5rem;
   font-size: 0.95rem;
+  color: #D5230C;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.field-hint {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  color: #D5230C;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.error-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .form-field {
-  text-align: left;
-}
-
-.form-field label {
-  display: block;
-  width: 100%;
+  text-align: center;
 }
 
 .form-field input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
+  border: 4px solid #000000;
+  border-radius: 16px;
   outline: none;
   transition: all 0.2s;
   font-family: 'Pixelify Sans', monospace;
   box-sizing: border-box;
+  background: #e8e8e8;
+  color: #000000;
+  text-align: center;
+  font-weight: 500;
+}
+
+.form-field input::placeholder {
+  color: #999999;
+  font-style: normal;
 }
 
 .form-field input:focus {
-  border-color: #6bcf7f;
-  box-shadow: 0 0 0 3px rgba(107, 207, 127, 0.1);
+  border-color: #000000;
+  background: #f5f5f5;
+  transform: scale(1.02);
 }
 
 .form-field input.input-error {
-  border-color: #ff6b6b;
-}
-
-.field-error {
-  margin: 0.5rem 0 0;
-  font-size: 0.85rem;
-  color: #ff6b6b;
-}
-
-.field-hint {
-  margin: 0.5rem 0 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
+  border-color: #ff0000;
+  background: #ffe6e6;
 }
 
 .submit-btn {
-  padding: 0.875rem 1.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #6bcf7f 0%, #5ab36b 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: #ffb84d;
+  color: #ffffff;
+  border: 4px solid #000000;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s;
   font-family: 'Pixelify Sans', monospace;
-  box-shadow: 0 4px 12px rgba(107, 207, 127, 0.3);
-}
-
-.submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(107, 207, 127, 0.4);
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(0);
+  text-transform: capitalize;
 }
 
 .submit-btn:disabled,
 .submit-btn.btn-disabled {
-  background: #cbd5e1;
+  background: #cccccc;
+  border-color: #999999;
+  color: #666666;
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
 }
 
 /* Style pixel art pour correspondre au reste du jeu */
@@ -300,15 +284,22 @@ watch(() => props.isOpen, (newVal) => {
   }
   
   .modal-content {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1.5rem 2rem;
+    border-width: 4px;
   }
   
   .title {
     font-size: 1.25rem;
   }
   
-  .pet-emoji {
-    font-size: 3rem;
+  .form-field input {
+    font-size: 1rem;
+    padding: 0.875rem 1.25rem;
+  }
+  
+  .submit-btn {
+    font-size: 1.1rem;
+    padding: 0.875rem 1.75rem;
   }
 }
 </style>

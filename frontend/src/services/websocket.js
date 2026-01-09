@@ -61,6 +61,11 @@ class WebSocketService {
       this.emit('user:offline', data);
     });
 
+    // Localisation des utilisateurs
+    this.socket.on('user:location', (data) => {
+      this.emit('user:location', data);
+    });
+
     // Mise à jour des pets
     this.socket.on('pet:updated', (data) => {
       this.emit('pet:updated', data);

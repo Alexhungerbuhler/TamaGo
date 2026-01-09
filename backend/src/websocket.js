@@ -48,8 +48,10 @@ export function initializeWebSocket(httpServer) {
     // Stocker l'utilisateur connecté
     connectedUsers.set(socket.userId, {
       socketId: socket.id,
+      userId: socket.userId,
       userName: socket.userName,
-      connectedAt: new Date()
+      connectedAt: new Date(),
+      location: null
     });
 
     // Notifier tous les clients qu'un utilisateur est en ligne
@@ -81,6 +83,15 @@ export function initializeWebSocket(httpServer) {
         socket.join(roomName);
         socket.currentRoom = roomName;
         
+        // Stocker la location de l'utilisateur
+        connectedUsers.set(socket.userId, {
+          ...connectedUsers.get(socket.userId),
+          location: {
+            type: 'Point',
+            coordinates: [longitude, latitude]
+          }
+        });
+        
         // Récupérer les pets à proximité
         const nearbyPets = await Tamagotchi.find({
           location: {
@@ -100,6 +111,16 @@ export function initializeWebSocket(httpServer) {
         });
 
         socket.emit('location:nearby-pets', { pets: nearbyPets });
+
+        // Broadcaster la location de l'utilisateur à la room
+        io.to(roomName).emit('user:location', {
+          userId: socket.userId,
+          userName: socket.userName,
+          location: {
+            type: 'Point',
+            coordinates: [longitude, latitude]
+          }
+        });
       } catch (err) {
         console.error('❌ Erreur location:join:', err);
         socket.emit('error', { message: 'Failed to join location' });

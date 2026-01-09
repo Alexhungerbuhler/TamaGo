@@ -148,30 +148,71 @@ export function usePetNotifications() {
  */
 export function useOnlineUsers() {
   const onlineUsers = ref(new Set());
+  const onlineUsersData = ref(new Map()); // Stocker les données complètes des utilisateurs
   
   const handleUserOnline = (data) => {
     onlineUsers.value.add(data.userId);
+    // Stocker les données utilisateur si disponibles
+    if (data.userId) {
+      onlineUsersData.value.set(data.userId, {
+        _id: data.userId,
+        name: data.userName || 'Unknown',
+        location: data.location,
+        connectedAt: data.connectedAt
+      });
+    }
   };
 
   const handleUserOffline = (data) => {
     onlineUsers.value.delete(data.userId);
+    onlineUsersData.value.delete(data.userId);
+  };
+
+  const handleUserLocation = (data) => {
+    if (data.userId && data.location) {
+      // Mettre à jour la location de l'utilisateur
+      const userData = onlineUsersData.value.get(data.userId);
+      if (userData) {
+        userData.location = data.location;
+      } else {
+        onlineUsersData.value.set(data.userId, {
+          _id: data.userId,
+          name: data.userName || 'Unknown',
+          location: data.location
+        });
+      }
+      console.log('📍 User location updated:', data.userId, data.location);
+    }
   };
 
   const unsubscribeOnline = wsService.on('user:online', handleUserOnline);
   const unsubscribeOffline = wsService.on('user:offline', handleUserOffline);
+  const unsubscribeUserLocation = wsService.on('user:location', handleUserLocation);
 
   onUnmounted(() => {
     unsubscribeOnline();
     unsubscribeOffline();
+    unsubscribeUserLocation();
   });
 
   const isUserOnline = (userId) => {
     return onlineUsers.value.has(userId);
   };
 
+  const getUserData = (userId) => {
+    return onlineUsersData.value.get(userId);
+  };
+
+  const getOnlineUsersList = () => {
+    return Array.from(onlineUsersData.value.values()).filter(user => user.location);
+  };
+
   return {
     onlineUsers,
-    isUserOnline
+    onlineUsersData,
+    isUserOnline,
+    getUserData,
+    getOnlineUsersList
   };
 }
 

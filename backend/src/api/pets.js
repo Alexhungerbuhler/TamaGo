@@ -131,10 +131,15 @@ export async function updatePet(req, res, next) {
     }
     
     // Mettre à jour uniquement les champs autorisés
-    const allowedFields = ['name', 'species', 'inclination'];
+    const allowedFields = ['name', 'species', 'inclination', 'energy', 'fun', 'hunger', 'hygiene'];
     allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
-        pet[field] = req.body[field];
+        // Clamper les stats entre 0 et 100
+        if (['energy', 'fun', 'hunger', 'hygiene'].includes(field)) {
+          pet[field] = clamp(req.body[field]);
+        } else {
+          pet[field] = req.body[field];
+        }
       }
     });
     

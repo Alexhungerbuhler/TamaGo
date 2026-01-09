@@ -73,10 +73,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { usePetsStore } from '../store/pets';
 
 const router = useRouter();
+const petsStore = usePetsStore();
+
+// Pet actuel
+const currentPet = computed(() => petsStore.currentPet || (petsStore.petsList.length > 0 ? petsStore.petsList[0] : null));
 
 // Les 6 Tamagotchis pour grille 4x3
 const tamagotchis = [
@@ -98,7 +103,34 @@ const canFlip = ref(true);
 const gameWon = computed(() => pairsFound.value === 6);
 
 // Initialiser le jeu
-const initGame = () => {
+const initGame = async () => {
+  // Vérifier que le pet a assez d'énergie
+  if (!currentPet.value) {
+    alert('❌ You need a Tamagotchi to play!');
+    router.push('/tamago');
+    return;
+  }
+  
+  if (currentPet.value.energy < 10) {
+    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 10 energy to play.\nLet it rest!');
+    return;
+  }
+  
+  // Consommer l'énergie au début de la partie (-10)
+  try {
+    const petId = currentPet.value._id;
+    const newEnergy = Math.max(0, currentPet.value.energy - 10);
+    
+    await petsStore.updatePet(petId, { energy: newEnergy });
+    await petsStore.fetchPet(petId);
+    
+    console.log('✅ Energy consumed: -10');
+  } catch (error) {
+    console.error('❌ Error consuming energy:', error);
+    alert('Error starting game. Please try again.');
+    return;
+  }
+  
   // Créer les paires (2 cartes de chaque Tamagotchi)
   const pairs = [];
   tamagotchis.forEach(tama => {
@@ -177,12 +209,41 @@ const resetGame = () => {
   initGame();
 };
 
+// Watcher pour détecter la victoire et ajouter du fun
+watch(gameWon, async (newVal) => {
+  if (newVal && currentPet.value) {
+    try {
+      const petId = currentPet.value._id;
+      const newFun = Math.min(100, currentPet.value.fun + 10);
+      
+      await petsStore.updatePet(petId, { fun: newFun });
+      await petsStore.fetchPet(petId);
+      
+      console.log('🎉 Victory! Fun increased: +10');
+    } catch (error) {
+      console.error('❌ Error updating fun:', error);
+    }
+  }
+});
+
 // Navigation
 const goBack = () => {
   router.push('/tamago');
 };
 
-onMounted(() => {
+onMounted(async () => {
+  // Charger le pet actuel
+  try {
+    if (!petsStore.currentPet && petsStore.petsList.length === 0) {
+      await petsStore.fetchPets({ limit: 1 });
+    }
+    if (petsStore.petsList.length > 0 && !petsStore.currentPet) {
+      await petsStore.fetchPet(petsStore.petsList[0]._id);
+    }
+  } catch (error) {
+    console.error('Error loading pet:', error);
+  }
+  
   initGame();
 });
 </script>

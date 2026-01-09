@@ -67,6 +67,15 @@ export function initializeWebSocket(httpServer) {
     socket.on('location:join', async (data) => {
       try {
         const { latitude, longitude, radius = 1000 } = data;
+        console.log(`📍 location:join reçu - lat: ${latitude}, lng: ${longitude}, radius: ${radius}`);
+        
+        // Vérifier tous les pets dans la DB
+        const allPets = await Tamagotchi.find({}).populate('owner', 'name').exec();
+        console.log(`📊 Total de pets en DB: ${allPets.length}`);
+        allPets.forEach(pet => {
+          console.log(`   - ${pet.name} - location: [${pet.location?.coordinates}]`);
+        });
+        
         const roomName = `geo:${Math.floor(latitude)}:${Math.floor(longitude)}`;
         
         socket.join(roomName);
@@ -85,8 +94,14 @@ export function initializeWebSocket(httpServer) {
           }
         }).populate('owner', 'name').exec();
 
+        console.log(`✅ Pets trouvés à proximité: ${nearbyPets.length}`);
+        nearbyPets.forEach(pet => {
+          console.log(`   - ${pet.name} à [${pet.location?.coordinates}]`);
+        });
+
         socket.emit('location:nearby-pets', { pets: nearbyPets });
       } catch (err) {
+        console.error('❌ Erreur location:join:', err);
         socket.emit('error', { message: 'Failed to join location' });
       }
     });

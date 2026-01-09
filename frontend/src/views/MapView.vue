@@ -1,17 +1,17 @@
 <template>
   <div class="map-view">
-    <!-- Modale permission géolocalisation -->
+    <!-- Permission Modal -->
     <div v-if="showPermissionModal" class="permission-modal-overlay">
       <div class="permission-modal">
         <div class="modal-icon">📍</div>
-        <h2>Accès à votre localisation</h2>
-        <p>TamaGo a besoin de votre localisation pour afficher les Tamagotchis à proximité et explorer la carte.</p>
+        <h2>Location Access</h2>
+        <p>TamaGo needs your location to display nearby Tamagotchis and explore the map.</p>
         <div class="modal-actions">
           <button @click="requestLocationPermission" class="btn-allow">
-            ✓ Autoriser
+            ✓ Allow
           </button>
           <button @click="rejectLocationPermission" class="btn-deny">
-            ✗ Refuser
+            ✗ Deny
           </button>
         </div>
       </div>
@@ -20,17 +20,13 @@
     <div class="map-container">
       <div v-if="!isWatchingLocation" class="map-placeholder">
         <p v-if="locationError">❌ {{ locationError }}</p>
-        <p v-else>📍 Chargement de la carte...</p>
+        <p v-else>📍 Loading map...</p>
       </div>
-      
-      <div v-else style="width: 100%; height: 100%; display: flex;">
-        <!-- Carte Leaflet -->
-        <div id="leaflet-map" class="leaflet-map"></div>
-      </div>
+      <div id="maplibre-map" class="maplibre-map"></div>
     </div>
 
     <div v-if="currentLocation && isWatchingLocation" class="location-info">
-      📍 Position actuelle: {{ currentLocation.latitude.toFixed(6) }}, {{ currentLocation.longitude.toFixed(6) }}
+      📍 Current position: {{ currentLocation.latitude.toFixed(6) }}, {{ currentLocation.longitude.toFixed(6) }}
     </div>
 
     <div v-if="locationError" class="error">
@@ -38,27 +34,27 @@
     </div>
 
     <div class="map-footer">
-      <button @click="goBack" class="btn-back">← Retour à Tamago</button>
+      <button @click="goBack" class="btn-back">← Back to Tamago</button>
     </div>
 
-    <!-- Modal détail pet -->
+    <!-- Pet Detail Modal -->
     <div v-if="selectedPet" class="pet-detail-modal" @click="selectedPet = null">
       <div class="modal-content" @click.stop>
         <h3>{{ selectedPet.name }}</h3>
-        <p>👤 Propriétaire: {{ selectedPet.owner?.name }}</p>
-        <p v-if="onlineUsers.has(selectedPet.owner?._id)" class="online-status">🟢 En ligne</p>
-        <p v-else class="offline-status">⚫ Hors ligne</p>
-        <button @click="selectedPet = null" class="btn-close">Fermer</button>
+        <p>👤 Owner: {{ selectedPet.owner?.name }}</p>
+        <p v-if="onlineUsers.has(selectedPet.owner?._id)" class="online-status">🟢 Online</p>
+        <p v-else class="offline-status">⚫ Offline</p>
+        <button @click="selectedPet = null" class="btn-close">Close</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useNearbyPets, useOnlineUsers } from '../composables/useWebSocket';
 import { useRouter } from 'vue-router';
-import L from 'leaflet';
+import maplibregl from 'maplibre-gl';
 
 const router = useRouter();
 const {
@@ -70,7 +66,7 @@ const {
   stopWatchingLocation
 } = useNearbyPets();
 
-const { onlineUsers, isUserOnline } = useOnlineUsers();
+const { onlineUsers } = useOnlineUsers();
 
 const selectedPet = ref(null);
 const map = ref(null);
@@ -89,7 +85,8 @@ function rejectLocationPermission() {
 }
 
 function startTracking() {
-  startWatchingLocation(1000); // 1km de rayon
+  console.log('Starting location tracking');
+  startWatchingLocation(1000);
 }
 
 function stopTracking() {
@@ -98,164 +95,118 @@ function stopTracking() {
 }
 
 function goBack() {
-  // Nettoyer la carte et la géolocalisation
   destroyMap();
   stopWatchingLocation();
-  // Naviguer vers Tamago sans confirmation
   router.push('/tamago');
 }
 
-function selectPet(pet) {
-  selectedPet.value = pet;
-}
-
-function calculateDistance(location) {
-  if (!currentLocation.value || !location?.coordinates) return '?';
-  
-  const [lng, lat] = location.coordinates;
-  const R = 6371e3; // Rayon de la Terre en mètres
-  const φ1 = currentLocation.value.latitude * Math.PI / 180;
-  const φ2 = lat * Math.PI / 180;
-  const Δφ = (lat - currentLocation.value.latitude) * Math.PI / 180;
-  const Δλ = (lng - currentLocation.value.longitude) * Math.PI / 180;
-
-  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-          Math.cos(φ1) * Math.cos(φ2) *
-          Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-  const distance = R * c;
-  return Math.round(distance);
-}
-
 function initMap() {
-  if (!currentLocation.value) return;
-  
-  // Détruire la carte existante
+  if (!currentLocation.value) {
+    console.error('No current location');
+    return;
+  }
+
   if (map.value) {
     map.value.remove();
     map.value = null;
   }
 
-  // Créer une nouvelle carte
-  const mapElement = document.getElementById('leaflet-map');
+  const mapElement = document.getElementById('maplibre-map');
   if (!mapElement) {
-    console.error('Leaflet map element not found');
+    console.error('Map element not found');
     return;
   }
 
+  console.log('Initializing MapLibre map');
+
   try {
-    // Créer un renderer canvas explicite
-    const canvasRenderer = L.canvas({ padding: 0.5 });
+    map.value = new maplibregl.Map({
+      container: 'maplibre-map',
+      style: 'https://demotiles.maplibre.org/style.json',
+      center: [currentLocation.value.longitude, currentLocation.value.latitude],
+      zoom: 16,
+      pitch: 0,
+      bearing: 0
+    });
 
-    map.value = L.map('leaflet-map', {
-      preferCanvas: true,
-      renderer: canvasRenderer,
-      zoomAnimation: true,
-      fadeAnimation: true,
-      markerZoomAnimation: true,
-      wheelPxPerZoomLevel: 60,
-      doubleClickZoom: true
-    }).setView(
-      [currentLocation.value.latitude, currentLocation.value.longitude],
-      16
-    );
+    console.log('Map created');
 
-    // Ajouter les tuiles OpenStreetMap avec options optimisées
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-      minZoom: 1,
-      tileSize: 256,
-      keepBuffer: 2,
-      className: 'leaflet-tile-canvas'
-    }).addTo(map.value);
+    map.value.on('load', () => {
+      console.log('Map loaded');
+      setTimeout(() => {
+        console.log('Adding markers - nearbyPets:', nearbyPets.value.length);
+        updateUserMarker();
+        updatePetMarkers();
+      }, 100);
+    });
 
-    // Invalider la taille pour forcer Leaflet à recalculer
-    setTimeout(() => {
-      if (map.value) {
-        map.value.invalidateSize();
-        // Recentrer après resize
-        map.value.setView([currentLocation.value.latitude, currentLocation.value.longitude], 16);
-      }
-    }, 100);
-
-    // Ajouter le marqueur de l'utilisateur
-    updateUserMarker();
-    
-    // Ajouter les marqueurs des pets
-    updatePetMarkers();
-
-    console.log('Carte initialisée:', currentLocation.value);
+    map.value.on('error', (e) => {
+      console.error('Map error:', e);
+    });
   } catch (err) {
-    console.error('Erreur lors de l\'initialisation de la carte:', err);
+    console.error('Initialization error:', err);
   }
 }
 
 function updateUserMarker() {
-  if (!map.value || !currentLocation.value) return;
+  if (!map.value || !currentLocation.value || !map.value.isStyleLoaded()) return;
 
   if (userMarker.value) {
-    userMarker.value.setLatLng([currentLocation.value.latitude, currentLocation.value.longitude]);
-  } else {
-    // Créer un marqueur bleu pour l'utilisateur
-    userMarker.value = L.circleMarker(
-      [currentLocation.value.latitude, currentLocation.value.longitude],
-      {
-        radius: 8,
-        fillColor: '#2563eb',
-        color: '#1d4ed8',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-        renderer: map.value.options.renderer
-      }
-    ).addTo(map.value);
-
-    userMarker.value.bindPopup('<b>📍 Votre position</b>');
+    userMarker.value.remove();
   }
 
-  map.value.setView([currentLocation.value.latitude, currentLocation.value.longitude], 16);
+  const el = document.createElement('div');
+  el.className = 'marker user-marker';
+  el.innerHTML = '📍';
+  el.title = 'Your location';
+
+  userMarker.value = new maplibregl.Marker({ element: el })
+    .setLngLat([currentLocation.value.longitude, currentLocation.value.latitude])
+    .addTo(map.value);
+
+  console.log('User marker added');
 }
 
 function updatePetMarkers() {
-  if (!map.value) return;
+  if (!map.value || !map.value.isStyleLoaded()) {
+    console.warn('Map not ready');
+    return;
+  }
 
-  // Supprimer les anciens marqueurs
   petMarkers.value.forEach((marker) => {
-    map.value.removeLayer(marker);
+    marker.remove();
   });
   petMarkers.value.clear();
 
-  // Ajouter les nouveaux marqueurs pour chaque pet
+  console.log('Adding', nearbyPets.value.length, 'pet markers');
+
   nearbyPets.value.forEach((pet) => {
-    if (!pet.location?.coordinates) return;
+    if (!pet.location?.coordinates) {
+      console.warn('Pet without location:', pet.name);
+      return;
+    }
 
     const [lng, lat] = pet.location.coordinates;
     const isOnline = onlineUsers.value.has(pet.owner?._id);
 
-    const markerColor = isOnline ? '#ef4444' : '#999';
+    console.log(`Adding marker: ${pet.name} at [${lat}, ${lng}]`);
 
-    const marker = L.circleMarker([lat, lng], {
-      radius: 6,
-      fillColor: markerColor,
-      color: '#fff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.8,
-      renderer: map.value.options.renderer
-    }).addTo(map.value);
+    const el = document.createElement('div');
+    el.className = `marker pet-marker ${isOnline ? 'online' : 'offline'}`;
+    el.innerHTML = isOnline ? '🐣' : '⚪';
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => {
+      selectedPet.value = pet;
+    });
 
-    marker.bindPopup(`
-      <div class="marker-popup">
-        <b>🐣 ${pet.name}</b><br>
-        <small>👤 ${pet.owner?.name || 'Inconnu'}</small><br>
-        <small>${isOnline ? '🟢 En ligne' : '⚫ Hors ligne'}</small>
-      </div>
-    `);
+    const marker = new maplibregl.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .addTo(map.value);
 
     petMarkers.value.set(pet._id, marker);
   });
+
+  console.log(`${petMarkers.value.size} pet markers added`);
 }
 
 function destroyMap() {
@@ -268,108 +219,65 @@ function destroyMap() {
 }
 
 onMounted(() => {
-  console.log('MapView montée');
-  // Afficher la modale de permission - ne pas démarrer automatiquement
+  console.log('MapView mounted');
   showPermissionModal.value = true;
 });
 
 onUnmounted(() => {
   destroyMap();
   stopWatchingLocation();
-  console.log('MapView démontée');
+  console.log('MapView unmounted');
 });
 
-// Observer les changements de localisation
 watch(
-  () => currentLocation.value,
-  (newLocation) => {
-    if (newLocation && isWatchingLocation.value) {
-      if (!map.value) {
+  () => isWatchingLocation.value,
+  async (watching) => {
+    console.log('isWatchingLocation changed:', watching);
+    if (watching && currentLocation.value) {
+      console.log('Location acquired, initializing map');
+      await nextTick();
+      setTimeout(() => {
         initMap();
-      } else {
-        updateUserMarker();
-      }
-    }
-  },
-  { deep: true }
-);
-
-// Observer les changements de pets à proximité
-watch(
-  () => nearbyPets.value,
-  () => {
-    if (map.value) {
-      updatePetMarkers();
-    }
-  },
-  { deep: true }
-);
-
-// Observer les changements de statut en ligne
-watch(
-  () => onlineUsers.value,
-  () => {
-    if (map.value) {
-      updatePetMarkers();
+      }, 50);
+    } else {
+      destroyMap();
     }
   }
 );
 
-// Initialiser la carte quand on active le suivi
 watch(
-  () => isWatchingLocation.value,
-  async (watching) => {
-    if (watching && currentLocation.value) {
-      // Attendre que Vue mette à jour le DOM
-      await nextTick();
-      // Puis attendre un peu pour que le rendering soit complet
-      setTimeout(() => {
-        initMap();
-      }, 25);
-    } else {
-      destroyMap();
+  () => locationError.value,
+  (error) => {
+    if (error) {
+      console.error('Location error:', error);
+    }
+  }
+);
+
+watch(
+  () => nearbyPets.value,
+  (pets) => {
+    console.log('Pets updated:', pets.length);
+    if (map.value && map.value.isStyleLoaded()) {
+      updatePetMarkers();
+    }
+  },
+  { deep: true }
+);
+
+watch(
+  () => onlineUsers.value,
+  () => {
+    if (map.value && map.value.isStyleLoaded()) {
+      updatePetMarkers();
     }
   }
 );
 </script>
 
 <style scoped>
-@import 'leaflet/dist/leaflet.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
-
-/* Assurer que Leaflet fonctionne correctement */
-:deep(.leaflet-container) {
-  background: #ddd;
-  outline: 0;
-  z-index: 1;
-  -webkit-font-smoothing: antialiased;
-}
-
-:deep(.leaflet-tile) {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-/* Optimisations pour canvas rendering */
-:deep(.leaflet-canvas-container) {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-:deep(.leaflet-pane.leaflet-renderer-pane canvas) {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: none;
-}
-
-/* Optimization pour les interactions */
-:deep(.leaflet-interactive) {
-  cursor: pointer;
-  filter: drop-shadow(0 0 2px rgba(0,0,0,0.1));
-}
 
 .map-view {
   display: flex;
@@ -379,21 +287,52 @@ watch(
   background: #fff;
 }
 
-.map-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2rem 1.5rem;
-  border-bottom: 2px solid #e5e5e5;
-  background: #fff;
+.map-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
 }
 
-.map-header h2 {
-  margin: 0;
+.maplibre-map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   font-family: 'Pixelify Sans', monospace;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #000000;
+  color: #666;
+  background: #f5f5f5;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.map-placeholder p {
+  font-size: 1.2rem;
+}
+
+.location-info {
+  background: #f0f9ff;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #ddd;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.error {
+  background: #fee;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #fcc;
+  font-family: 'Pixelify Sans', monospace;
+  color: #c00;
 }
 
 .map-footer {
@@ -402,35 +341,6 @@ watch(
   background: #fff;
   display: flex;
   justify-content: center;
-}
-
-.btn-primary,
-.btn-danger,
-.btn-back {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #2563eb;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #1d4ed8;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
 }
 
 .btn-back {
@@ -450,7 +360,44 @@ watch(
   background: #5169c7;
 }
 
-/* Permission Modal */
+.marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  background: white;
+  border: 2px solid #627DE0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.marker:hover {
+  transform: scale(1.15);
+}
+
+.user-marker {
+  background: #e3f2fd;
+  border-color: #2563eb;
+}
+
+.pet-marker {
+  background: white;
+  border-color: #999;
+}
+
+.pet-marker.online {
+  border-color: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.pet-marker.offline {
+  border-color: #999;
+  opacity: 0.7;
+}
+
 .permission-modal-overlay {
   position: fixed;
   top: 0;
@@ -533,156 +480,6 @@ watch(
   background: #e0e0e0;
 }
 
-.location-info {
-  background: #f0f9ff;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #ddd;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.95rem;
-  color: #333;
-}
-
-.error {
-  background: #ffe5e5;
-  color: #ff4444;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #ff4444;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.95rem;
-}
-
-.map-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  background: #f9f9f9;
-  position: relative;
-}
-
-.map-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  color: #666;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 1.1rem;
-}
-
-.leaflet-map {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.pets-list {
-  width: 40%;
-  padding: 1.5rem;
-  overflow-y: auto;
-  border-left: 2px solid #e5e5e5;
-  background: #fff;
-  max-height: 100%;
-}
-
-.pets-list h3 {
-  margin: 0 0 1.5rem 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #000;
-}
-
-.empty {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 1rem;
-}
-
-.pet-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-  margin-bottom: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid #e5e5e5;
-}
-
-.pet-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background: #fff;
-  border-color: #627DE0;
-}
-
-.pet-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #e5e5e5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 2rem;
-}
-
-.pet-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.pet-emoji {
-  font-size: 1.5rem;
-}
-
-.pet-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.pet-info h4 {
-  margin: 0 0 0.25rem 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.owner {
-  margin: 0 0 0.5rem 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.85rem;
-  color: #666;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.distance {
-  margin: 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.85rem;
-  color: #627DE0;
-  font-weight: 700;
-}
-
-.online-indicator {
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
 .pet-detail-modal {
   position: fixed;
   top: 0;
@@ -698,127 +495,69 @@ watch(
 
 .modal-content {
   background: white;
-  padding: 2.5rem;
   border-radius: 12px;
-  max-width: 500px;
+  padding: 2rem;
+  max-width: 300px;
   width: 90%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  font-family: 'Pixelify Sans', monospace;
 }
 
 .modal-content h3 {
   margin: 0 0 1rem 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 1.5rem;
-  font-weight: 700;
   color: #000;
+  font-size: 1.3rem;
 }
 
 .modal-content p {
   margin: 0.5rem 0;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.95rem;
-  color: #333;
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .online-status {
-  color: #10b981;
-  font-weight: 700;
+  color: #22c55e !important;
 }
 
 .offline-status {
-  color: #6b7280;
-  font-weight: 700;
-}
-
-.stats {
-  margin: 1rem 0;
-}
-
-.stat {
-  margin-bottom: 1rem;
-}
-
-.stat span {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 600;
-}
-
-.bar {
-  height: 12px;
-  background: #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.fill {
-  height: 100%;
-  transition: width 0.3s;
-}
-
-.fill.health {
-  background: #10b981;
-}
-
-.fill.happiness {
-  background: #f59e0b;
-}
-
-.fill.hunger {
-  background: #ef4444;
+  color: #666 !important;
 }
 
 .btn-close {
-  display: block;
-  width: 100%;
-  padding: 1rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
   background: #627DE0;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-family: 'Pixelify Sans', monospace;
-  font-size: 1rem;
-  font-weight: 700;
   cursor: pointer;
+  width: 100%;
   transition: background 0.2s;
-  margin-top: 1.5rem;
 }
 
 .btn-close:hover {
   background: #5169c7;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .map-view {
-    padding: 0.5rem;
-    height: calc(100vh - 60px);
+  .map-footer {
+    padding: 1rem;
   }
 
-  .map-header {
-    flex-direction: column;
-    align-items: stretch;
+  .btn-back {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
   }
 
-  .map-header h2 {
-    margin-bottom: 0.5rem;
+  .permission-modal {
+    padding: 2rem 1.5rem;
   }
 
-  .map-container {
-    flex-direction: column;
-  }
-
-  .leaflet-map {
-    width: 100%;
-    min-height: 300px;
-    flex: 1;
-  }
-
-  .pets-list {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid #ddd;
-    max-height: 300px;
+  .marker {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
   }
 }
 </style>

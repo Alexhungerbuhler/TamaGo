@@ -107,10 +107,15 @@ class WebSocketService {
    * @param {Object} location - {latitude, longitude, radius}
    */
   joinLocation(location) {
+    console.log('🗺️ joinLocation appelée avec:', location);
+    console.log('   Connecté?', this.isConnected);
+    console.log('   Socket existe?', !!this.socket);
+    
     if (!this.isConnected) {
-      console.warn('WebSocket not connected');
+      console.warn('⚠️ WebSocket not connected - attendez la connexion');
       return;
     }
+    console.log('✅ Envoi de location:join');
     this.socket.emit('location:join', location);
   }
 

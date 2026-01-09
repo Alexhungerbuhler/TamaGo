@@ -52,14 +52,14 @@
     <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Crottes / Poops - displayed based on hygiene level -->
-    <div
+    <img
       v-for="(poop, index) in poopsPositions"
       :key="`poop-${index}`"
       :class="$style.poop"
       :style="{ left: poop.x + 'px', top: poop.y + 'px' }"
-    >
-      💩
-    </div>
+      src="/icons/poop.png"
+      alt="poop"
+    />
     
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
@@ -115,7 +115,13 @@ const petMovementInterval = ref(null);
 const nbPoops = computed(() => {
   if (!currentPet.value || !isHatched.value) return 0;
   const hygiene = currentPet.value.hygiene || 0;
-  return Math.floor((100 - hygiene) / 25); // 0 à 4 crottes
+  
+  // Paliers exacts basés sur les états de la jauge
+  if (hygiene > 75) return 0;      // Vert (100-76%)
+  if (hygiene > 50) return 1;      // Jaune (75-51%)
+  if (hygiene > 25) return 2;      // Orange (50-26%)
+  if (hygiene > 0) return 3;       // Rouge (25-1%)
+  return 4;                        // Critique (0%)
 });
 
 const poopsPositions = computed(() => {
@@ -1193,11 +1199,14 @@ onMounted(async () => {
 /* Poop styling */
 .poop {
   position: absolute;
-  font-size: 32px;
+  width: 40px;
+  height: 40px;
   z-index: 5;
   animation: poopAppear 0.3s ease-in-out;
   pointer-events: none;
   user-select: none;
+  image-rendering: pixelated;
+  object-fit: contain;
 }
 
 @keyframes poopAppear {

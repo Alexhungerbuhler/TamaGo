@@ -62,14 +62,8 @@ function continueGame() {
 }
 
 async function startNewGame() {
-  // Si l'utilisateur a déjà un pet, demander confirmation
+  // Si l'utilisateur a déjà un pet, le supprimer directement sans demander
   if (hasPets.value) {
-    const confirmed = confirm('Voulez-vous vraiment recommencer ? Cela supprimera votre Tamagotchi actuel.');
-    if (!confirmed) {
-      return;
-    }
-    
-    // Supprimer le pet existant
     try {
       const firstPet = petsStore.petsList[0];
       const petId = firstPet._id || firstPet.id;

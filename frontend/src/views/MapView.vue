@@ -116,6 +116,7 @@ const userMarker = ref(null);
 const petMarkers = ref(new Map());
 const userMarkers = ref(new Map());
 const showPermissionModal = ref(true);
+let mapInitializing = false;
 
 function requestLocationPermission() {
   showPermissionModal.value = false;
@@ -148,6 +149,12 @@ function initMap() {
     return;
   }
 
+  if (map.value || mapInitializing) {
+    return;
+  }
+
+  mapInitializing = true;
+
   if (map.value) {
     map.value.remove();
     map.value = null;
@@ -159,24 +166,30 @@ function initMap() {
   }
 
   try {
-    map.value = L.map('leaflet-map').setView(
-      [currentLocation.value.latitude, currentLocation.value.longitude],
-      16
-    );
+    map.value = L.map('leaflet-map', {
+      center: [currentLocation.value.latitude, currentLocation.value.longitude],
+      zoom: 17
+    });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
+      maxZoom: 18,
+      minZoom: 1,
+      crossOrigin: 'anonymous'
     }).addTo(map.value);
 
+    // Force recalculate map size
     setTimeout(() => {
-      updateUserMarker();
-      updatePetMarkers();
-      updateUserMarkers();
-      map.value.invalidateSize();
-    }, 200);
+      if (map.value) {
+        map.value.invalidateSize();
+        updateUserMarker();
+        updatePetMarkers();
+        updateUserMarkers();
+      }
+      mapInitializing = false;
+    }, 300);
   } catch (err) {
-    // Map initialization error
+    mapInitializing = false;
   }
 }
 
@@ -191,20 +204,28 @@ function updateUserMarker() {
 
   if (userMarker.value) {
     map.value.removeLayer(userMarker.value);
+    userMarker.value = null;
   }
 
-  const customIcon = L.divIcon({
-    className: 'custom-marker user-position-marker',
-    html: '📍',
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40]
+  const customIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
   });
 
-  userMarker.value = L.marker(
-    [currentLocation.value.latitude, currentLocation.value.longitude],
-    { icon: customIcon, title: 'Your location' }
-  ).addTo(map.value);
+  try {
+    userMarker.value = L.marker(
+      [currentLocation.value.latitude, currentLocation.value.longitude],
+      { icon: customIcon, title: 'Your location' }
+    )
+      .bindPopup('📍 Your location')
+      .addTo(map.value);
+  } catch (err) {
+    // Marker error
+  }
 }
 
 function updatePetMarkers() {
@@ -213,7 +234,11 @@ function updatePetMarkers() {
   }
 
   petMarkers.value.forEach((marker) => {
-    map.value.removeLayer(marker);
+    try {
+      map.value.removeLayer(marker);
+    } catch (err) {
+      // Layer already removed
+    }
   });
   petMarkers.value.clear();
 
@@ -225,23 +250,30 @@ function updatePetMarkers() {
     const [lng, lat] = pet.location.coordinates;
     const isOnline = onlineUsers.value.has(pet.owner?._id);
 
-    const customIcon = L.divIcon({
-      className: `custom-marker pet-marker ${isOnline ? 'online' : 'offline'}`,
-      html: isOnline ? '🐣' : '⚪',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40]
+    const customIcon = L.icon({
+      iconUrl: isOnline 
+        ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
+        : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
     });
 
-    const marker = L.marker([lat, lng], { icon: customIcon, title: pet.name })
-      .bindPopup(`<strong>${pet.name}</strong><br>Owner: ${pet.owner?.name}<br>Status: ${isOnline ? '🟢 Online' : '⚫ Offline'}`)
-      .addTo(map.value);
+    try {
+      const marker = L.marker([lat, lng], { icon: customIcon, title: pet.name })
+        .bindPopup(`<strong>${pet.name}</strong><br>Owner: ${pet.owner?.name}<br>Status: ${isOnline ? '🟢 Online' : '⚫ Offline'}`)
+        .addTo(map.value);
 
-    marker.on('click', () => {
-      selectedPet.value = pet;
-    });
+      marker.on('click', () => {
+        selectedPet.value = pet;
+      });
 
-    petMarkers.value.set(pet._id, marker);
+      petMarkers.value.set(pet._id, marker);
+    } catch (err) {
+      // Marker error
+    }
   });
 }
 
@@ -251,7 +283,11 @@ function updateUserMarkers() {
   }
 
   userMarkers.value.forEach((marker) => {
-    map.value.removeLayer(marker);
+    try {
+      map.value.removeLayer(marker);
+    } catch (err) {
+      // Layer already removed
+    }
   });
   userMarkers.value.clear();
 
@@ -264,23 +300,28 @@ function updateUserMarkers() {
 
     const [lng, lat] = user.location.coordinates;
 
-    const customIcon = L.divIcon({
-      className: 'custom-marker user-location-marker',
-      html: '👤',
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40]
+    const customIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
     });
 
-    const marker = L.marker([lat, lng], { icon: customIcon, title: user.name })
-      .bindPopup(`<strong>${user.name}</strong><br>📍 Online<br>Coords: ${lat.toFixed(4)}, ${lng.toFixed(4)}`)
-      .addTo(map.value);
+    try {
+      const marker = L.marker([lat, lng], { icon: customIcon, title: user.name })
+        .bindPopup(`<strong>${user.name}</strong><br>📍 Online<br>Coords: ${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+        .addTo(map.value);
 
-    marker.on('click', () => {
-      selectedUser.value = user;
-    });
+      marker.on('click', () => {
+        selectedUser.value = user;
+      });
 
-    userMarkers.value.set(user._id, marker);
+      userMarkers.value.set(user._id, marker);
+    } catch (err) {
+      // Marker error
+    }
   });
 }
 
@@ -292,6 +333,7 @@ function destroyMap() {
     userMarkers.value.clear();
     userMarker.value = null;
   }
+  mapInitializing = false;
 }
 
 onMounted(() => {
@@ -309,7 +351,9 @@ watch(
     if (watching && currentLocation.value) {
       await nextTick();
       setTimeout(() => {
-        initMap();
+        if (!map.value && !mapInitializing) {
+          initMap();
+        }
       }, 100);
     } else if (!watching) {
       destroyMap();
@@ -320,11 +364,7 @@ watch(
 watch(
   () => currentLocation.value,
   (newLocation) => {
-    if (isWatchingLocation.value && newLocation && !map.value) {
-      setTimeout(() => {
-        initMap();
-      }, 100);
-    } else if (map.value && newLocation) {
+    if (map.value && newLocation) {
       updateUserMarker();
     }
   }
@@ -376,17 +416,29 @@ watch(
   height: 100vh;
   width: 100%;
   background: #fff;
+  min-height: 100vh;
+  position: relative;
 }
 
 .map-container {
   flex: 1;
   position: relative;
   overflow: hidden;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .leaflet-map {
+  flex: 1;
   width: 100%;
   height: 100%;
+  display: block;
+  position: relative;
+  z-index: 1;
+  background: #f0f0f0;
 }
 
 .map-placeholder {
@@ -394,6 +446,7 @@ watch(
   align-items: center;
   justify-content: center;
   height: 100%;
+  width: 100%;
   font-family: 'Pixelify Sans', monospace;
   color: #666;
   background: #f5f5f5;
@@ -402,7 +455,7 @@ watch(
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10;
+  z-index: 0;
 }
 
 .map-placeholder p {

@@ -181,7 +181,6 @@ export function useOnlineUsers() {
           location: data.location
         });
       }
-      console.log('📍 User location updated:', data.userId, data.location);
     }
   };
 
@@ -227,12 +226,10 @@ export function useNearbyPets() {
   let watchId = null;
 
   const handleNearbyPets = (data) => {
-    console.log('🗺️ Événement location:nearby-pets reçu:', data);
     nearbyPets.value = data.pets;
   };
 
   const handlePetMoved = (data) => {
-    console.log('🐾 Pet déplacé:', data);
     // Mettre à jour la position d'un pet dans la liste
     const index = nearbyPets.value.findIndex(p => p._id === data.petId);
     if (index !== -1) {
@@ -255,9 +252,6 @@ export function useNearbyPets() {
       (position) => {
         const { latitude, longitude } = position.coords;
         currentLocation.value = { latitude, longitude };
-        
-        console.log('📍 Géolocalisation reçue:', { latitude, longitude, radius });
-        console.log('🔌 WebSocket connecté?', wsService.isConnected);
         
         // Rejoindre la zone géographique
         wsService.joinLocation({ latitude, longitude, radius });

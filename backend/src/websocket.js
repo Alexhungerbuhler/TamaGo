@@ -112,8 +112,8 @@ export function initializeWebSocket(httpServer) {
 
         socket.emit('location:nearby-pets', { pets: nearbyPets });
 
-        // Broadcaster la location de l'utilisateur à la room
-        io.to(roomName).emit('user:location', {
+        // Broadcaster la location de l'utilisateur à TOUT LE MONDE
+        io.emit('user:location', {
           userId: socket.userId,
           userName: socket.userName,
           location: {

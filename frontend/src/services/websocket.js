@@ -13,11 +13,24 @@ class WebSocketService {
    */
   connect(token) {
     if (this.socket?.connected) {
-      console.log('WebSocket already connected');
       return;
     }
 
-    const WS_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+    // Déterminer l'URL du serveur
+    let WS_URL = import.meta.env.VITE_API_BASE_URL;
+    
+    // Si pas configuré ou localhost, utiliser l'URL du domaine actuel
+    if (!WS_URL || WS_URL.includes('localhost')) {
+      const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      const host = window.location.host;
+      // En production sur Render, utiliser le même domaine que le frontend
+      WS_URL = `${protocol}//${host.replace('frontend', 'backend')}`;
+      
+      // Si on est en dev local, rester sur localhost:3000
+      if (host.includes('localhost')) {
+        WS_URL = 'http://localhost:3000';
+      }
+    }
 
     this.socket = io(WS_URL, {
       auth: {
@@ -28,19 +41,16 @@ class WebSocketService {
 
     // Événements de connexion
     this.socket.on('connect', () => {
-      console.log('✅ WebSocket connected');
       this.isConnected = true;
       this.emit('connection:established');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('❌ WebSocket disconnected');
       this.isConnected = false;
       this.emit('connection:lost');
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error.message);
       this.emit('connection:error', error);
     });
 
@@ -112,15 +122,9 @@ class WebSocketService {
    * @param {Object} location - {latitude, longitude, radius}
    */
   joinLocation(location) {
-    console.log('🗺️ joinLocation appelée avec:', location);
-    console.log('   Connecté?', this.isConnected);
-    console.log('   Socket existe?', !!this.socket);
-    
     if (!this.isConnected) {
-      console.warn('⚠️ WebSocket not connected - attendez la connexion');
       return;
     }
-    console.log('✅ Envoi de location:join');
     this.socket.emit('location:join', location);
   }
 
@@ -140,7 +144,6 @@ class WebSocketService {
    */
   updatePetLocation(petId, latitude, longitude) {
     if (!this.isConnected) {
-      console.warn('WebSocket not connected');
       return;
     }
     this.socket.emit('location:update', { petId, latitude, longitude });
@@ -197,7 +200,7 @@ class WebSocketService {
       try {
         callback(data);
       } catch (error) {
-        console.error(`Error in WebSocket listener for ${event}:`, error);
+        // Error in listener
       }
     });
   }

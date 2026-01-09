@@ -346,6 +346,10 @@ const goToGames = () => {
   console.log('Navigating to Games');
   router.push('/games');
 };
+const goToExit = () => {
+  console.log('Navigating to Dashboard');
+  router.push('/dashboard');
+};
 
 // All icons in circular navigation order (top then bottom)
 const allIcons = ref([
@@ -355,10 +359,10 @@ const allIcons = ref([
   { id: 2, label: 'Fun', src: '/icons/entertainment-events-hobbies-popcorn.svg', section: 'top', key: 'fun' },
   { id: 3, label: 'Energy', src: '/icons/ecology-clean-battery.svg', section: 'top', key: 'energy' },
   // Bottom icons (navigation)
-  { id: 4, label: 'Profile', src: '/icons/Group.svg', section: 'bottom', navFunc: goToProfile },
-  { id: 5, label: 'Map', src: '/icons/map-navigation-location-focus.svg', section: 'bottom', navFunc: goToMap },
-  { id: 6, label: '1v1', src: '/icons/Group-1.svg', section: 'bottom', navFunc: go1v1 },
-  { id: 7, label: 'Games', src: '/icons/entertainment-events-hobbies-game-machines-arcade-1--Streamline-Pixel.svg', section: 'bottom', navFunc: goToGames }
+  { id: 4, label: 'Map', src: '/icons/interface-essential-global-public--Streamline-Pixel.svg', section: 'bottom', navFunc: goToMap },
+  { id: 5, label: 'Games', src: '/icons/entertainment-events-hobbies-game-machines-arcade-1--Streamline-Pixel.svg', section: 'bottom', navFunc: goToGames },
+  { id: 6, label: 'Profile', src: '/icons/Group.svg', section: 'bottom', navFunc: goToProfile },
+  { id: 7, label: 'Exit', src: '/icons/HomeIcon.svg', section: 'bottom', navFunc: goToExit }
 ]);
 
 // Top icons list (derived from allIcons)

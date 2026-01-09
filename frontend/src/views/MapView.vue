@@ -1,11 +1,29 @@
 <template>
   <div class="map-view">
+    <!-- Modale permission géolocalisation -->
+    <div v-if="showPermissionModal" class="permission-modal-overlay">
+      <div class="permission-modal">
+        <div class="modal-icon">📍</div>
+        <h2>Accès à votre localisation</h2>
+        <p>TamaGo a besoin de votre localisation pour afficher les Tamagotchis à proximité et explorer la carte.</p>
+        <div class="modal-actions">
+          <button @click="requestLocationPermission" class="btn-allow">
+            ✓ Autoriser
+          </button>
+          <button @click="rejectLocationPermission" class="btn-deny">
+            ✗ Refuser
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="map-container">
       <div v-if="!isWatchingLocation" class="map-placeholder">
-        <p>📍 Chargement de la carte...</p>
+        <p v-if="locationError">❌ {{ locationError }}</p>
+        <p v-else>📍 Chargement de la carte...</p>
       </div>
       
-      <div v-else style="width: 100%; height: 100%;">
+      <div v-else style="width: 100%; height: 100%; display: flex;">
         <!-- Carte Leaflet -->
         <div id="leaflet-map" class="leaflet-map"></div>
       </div>
@@ -20,7 +38,7 @@
     </div>
 
     <div class="map-footer">
-      <button @click="goBack" class="btn-back">← Retour au Dashboard</button>
+      <button @click="goBack" class="btn-back">← Retour à Tamago</button>
     </div>
 
     <!-- Modal détail pet -->
@@ -37,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useNearbyPets, useOnlineUsers } from '../composables/useWebSocket';
 import { useRouter } from 'vue-router';
 import L from 'leaflet';
@@ -58,6 +76,17 @@ const selectedPet = ref(null);
 const map = ref(null);
 const userMarker = ref(null);
 const petMarkers = ref(new Map());
+const showPermissionModal = ref(true);
+
+function requestLocationPermission() {
+  showPermissionModal.value = false;
+  startTracking();
+}
+
+function rejectLocationPermission() {
+  showPermissionModal.value = false;
+  router.push('/tamago');
+}
 
 function startTracking() {
   startWatchingLocation(1000); // 1km de rayon
@@ -72,8 +101,8 @@ function goBack() {
   // Nettoyer la carte et la géolocalisation
   destroyMap();
   stopWatchingLocation();
-  // Naviguer directement sans confirmation
-  router.push('/dashboard');
+  // Naviguer vers Tamago sans confirmation
+  router.push('/tamago');
 }
 
 function selectPet(pet) {
@@ -110,27 +139,57 @@ function initMap() {
 
   // Créer une nouvelle carte
   const mapElement = document.getElementById('leaflet-map');
-  if (!mapElement) return;
+  if (!mapElement) {
+    console.error('Leaflet map element not found');
+    return;
+  }
 
-  map.value = L.map('leaflet-map').setView(
-    [currentLocation.value.latitude, currentLocation.value.longitude],
-    13
-  );
+  try {
+    // Créer un renderer canvas explicite
+    const canvasRenderer = L.canvas({ padding: 0.5 });
 
-  // Ajouter les tuiles OpenStreetMap
-  // Utiliser des tuiles plus simples et moins détaillées
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 15
-  }).addTo(map.value);
+    map.value = L.map('leaflet-map', {
+      preferCanvas: true,
+      renderer: canvasRenderer,
+      zoomAnimation: true,
+      fadeAnimation: true,
+      markerZoomAnimation: true,
+      wheelPxPerZoomLevel: 60,
+      doubleClickZoom: true
+    }).setView(
+      [currentLocation.value.latitude, currentLocation.value.longitude],
+      16
+    );
 
-  // Ajouter le marqueur de l'utilisateur
-  updateUserMarker();
-  
-  // Ajouter les marqueurs des pets
-  updatePetMarkers();
+    // Ajouter les tuiles OpenStreetMap avec options optimisées
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+      minZoom: 1,
+      tileSize: 256,
+      keepBuffer: 2,
+      className: 'leaflet-tile-canvas'
+    }).addTo(map.value);
 
-  console.log('Carte initialisée:', currentLocation.value);
+    // Invalider la taille pour forcer Leaflet à recalculer
+    setTimeout(() => {
+      if (map.value) {
+        map.value.invalidateSize();
+        // Recentrer après resize
+        map.value.setView([currentLocation.value.latitude, currentLocation.value.longitude], 16);
+      }
+    }, 100);
+
+    // Ajouter le marqueur de l'utilisateur
+    updateUserMarker();
+    
+    // Ajouter les marqueurs des pets
+    updatePetMarkers();
+
+    console.log('Carte initialisée:', currentLocation.value);
+  } catch (err) {
+    console.error('Erreur lors de l\'initialisation de la carte:', err);
+  }
 }
 
 function updateUserMarker() {
@@ -148,14 +207,15 @@ function updateUserMarker() {
         color: '#1d4ed8',
         weight: 2,
         opacity: 1,
-        fillOpacity: 0.8
+        fillOpacity: 0.8,
+        renderer: map.value.options.renderer
       }
     ).addTo(map.value);
 
     userMarker.value.bindPopup('<b>📍 Votre position</b>');
   }
 
-  map.value.setView([currentLocation.value.latitude, currentLocation.value.longitude], 13);
+  map.value.setView([currentLocation.value.latitude, currentLocation.value.longitude], 16);
 }
 
 function updatePetMarkers() {
@@ -182,7 +242,8 @@ function updatePetMarkers() {
       color: '#fff',
       weight: 2,
       opacity: 1,
-      fillOpacity: 0.8
+      fillOpacity: 0.8,
+      renderer: map.value.options.renderer
     }).addTo(map.value);
 
     marker.bindPopup(`
@@ -208,8 +269,8 @@ function destroyMap() {
 
 onMounted(() => {
   console.log('MapView montée');
-  // Démarrer automatiquement la géolocalisation
-  startTracking();
+  // Afficher la modale de permission - ne pas démarrer automatiquement
+  showPermissionModal.value = true;
 });
 
 onUnmounted(() => {
@@ -257,12 +318,14 @@ watch(
 // Initialiser la carte quand on active le suivi
 watch(
   () => isWatchingLocation.value,
-  (watching) => {
+  async (watching) => {
     if (watching && currentLocation.value) {
-      // Attendre que le DOM soit prêt
+      // Attendre que Vue mette à jour le DOM
+      await nextTick();
+      // Puis attendre un peu pour que le rendering soit complet
       setTimeout(() => {
         initMap();
-      }, 100);
+      }, 25);
     } else {
       destroyMap();
     }
@@ -274,12 +337,46 @@ watch(
 @import 'leaflet/dist/leaflet.css';
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
 
-.map-view {
-  min-height: 100vh;
+/* Assurer que Leaflet fonctionne correctement */
+:deep(.leaflet-container) {
+  background: #ddd;
+  outline: 0;
+  z-index: 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+:deep(.leaflet-tile) {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Optimisations pour canvas rendering */
+:deep(.leaflet-canvas-container) {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  background: #fff;
+  height: 100%;
+}
+
+:deep(.leaflet-pane.leaflet-renderer-pane canvas) {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: none;
+}
+
+/* Optimization pour les interactions */
+:deep(.leaflet-interactive) {
+  cursor: pointer;
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.1));
+}
+
+.map-view {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  background: #fff;
 }
 
 .map-header {
@@ -353,6 +450,89 @@ watch(
   background: #5169c7;
 }
 
+/* Permission Modal */
+.permission-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.permission-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.modal-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.permission-modal h2 {
+  margin: 0 0 1rem 0;
+  color: #000000;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.permission-modal p {
+  margin: 0 0 1.5rem 0;
+  color: #666666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-allow,
+.btn-deny {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-allow {
+  background: #627DE0;
+  color: #ffffff;
+}
+
+.btn-allow:hover {
+  background: #5169c7;
+  transform: translateY(-2px);
+}
+
+.btn-deny {
+  background: #f0f0f0;
+  color: #666666;
+}
+
+.btn-deny:hover {
+  background: #e0e0e0;
+}
+
 .location-info {
   background: #f0f9ff;
   padding: 1rem 1.5rem;
@@ -392,6 +572,8 @@ watch(
 .leaflet-map {
   flex: 1;
   width: 100%;
+  height: 100%;
+  z-index: 1;
 }
 
 .pets-list {

@@ -19,16 +19,19 @@ class WebSocketService {
     // Déterminer l'URL du serveur
     let WS_URL = import.meta.env.VITE_API_BASE_URL;
     
-    // Si pas configuré ou localhost, utiliser l'URL du domaine actuel
-    if (!WS_URL || WS_URL.includes('localhost')) {
+    // Si pas configuré, utiliser l'URL du domaine actuel
+    if (!WS_URL) {
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
       const host = window.location.host;
-      // En production sur Render, utiliser le même domaine que le frontend
-      WS_URL = `${protocol}//${host.replace('frontend', 'backend')}`;
       
       // Si on est en dev local, rester sur localhost:3000
       if (host.includes('localhost')) {
         WS_URL = 'http://localhost:3000';
+      } else {
+        // En production sur Render, inférer l'URL du backend
+        // Par exemple: tamago-frontend.onrender.com -> tamago-backend.onrender.com
+        // Ou garder le même domaine si c'est un proxy
+        WS_URL = `${protocol}//${host}`;
       }
     }
 

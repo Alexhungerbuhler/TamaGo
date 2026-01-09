@@ -1,11 +1,11 @@
 <template>
-  <div class="map-view">
+  <div class="users-view">
     <!-- Permission Modal -->
     <div v-if="showPermissionModal" class="permission-modal-overlay">
       <div class="permission-modal">
         <div class="modal-icon">📍</div>
         <h2>Location Access</h2>
-        <p>TamaGo needs your location to display nearby Tamagotchis and explore the map.</p>
+        <p>TamaGo needs your location to find nearby users.</p>
         <div class="modal-actions">
           <button @click="requestLocationPermission" class="btn-allow">
             ✓ Allow
@@ -17,53 +17,47 @@
       </div>
     </div>
 
-    <div class="map-container">
-      <div v-if="!isWatchingLocation" class="map-placeholder">
-        <p v-if="locationError">❌ {{ locationError }}</p>
-        <p v-else>📍 Loading map...</p>
+    <div class="header">
+      <h1>👥 Users Nearby</h1>
+      <div v-if="currentLocation" class="location-badge">
+        📍 {{ currentLocation.latitude.toFixed(4) }}, {{ currentLocation.longitude.toFixed(4) }}
       </div>
-      <div id="leaflet-map" class="leaflet-map"></div>
     </div>
 
-    <div v-if="currentLocation && isWatchingLocation" class="location-info">
-      📍 Current position: {{ currentLocation.latitude.toFixed(6) }}, {{ currentLocation.longitude.toFixed(6) }}
-    </div>
+    <div class="content">
 
-    <!-- Online Users List -->
-    <div v-if="getOnlineUsersList().length > 0" class="users-list-panel">
-      <div class="users-list-header">
-        👥 Users Online: {{ getOnlineUsersList().length }}
-      </div>
-      <div class="users-list-content">
-        <div v-for="user in getOnlineUsersList()" :key="user._id" class="user-item" @click="selectedUser = user">
-          <div class="user-avatar">👤</div>
-          <div class="user-info">
-            <div class="user-name">{{ user.name }}</div>
-            <div v-if="user.location" class="user-coords">
-              📍 {{ user.location.coordinates[1].toFixed(4) }}, {{ user.location.coordinates[0].toFixed(4) }}
+
+      <!-- Users List -->
+      <div class="users-container">
+        <h2 v-if="getOnlineUsersList().length === 0" class="no-users">
+          🌐 No users nearby
+        </h2>
+        
+        <div v-else class="users-list">
+          <div 
+            v-for="user in getUsersWithDistance()" 
+            :key="user._id"
+            class="user-card"
+            @click="selectedUser = user"
+          >
+            <div class="user-avatar">👤</div>
+            <div class="user-info">
+              <h3>{{ user.name }}</h3>
+              <p class="distance">
+                📏 {{ user.distance.toFixed(2) }} m away
+              </p>
+              <p class="coords">
+                {{ user.location.coordinates[1].toFixed(4) }}, {{ user.location.coordinates[0].toFixed(4) }}
+              </p>
             </div>
+            <div class="status-badge">🟢</div>
           </div>
-          <div class="user-status">🟢</div>
         </div>
       </div>
-    </div>
 
-    <div v-if="locationError" class="error">
-      ❌ {{ locationError }}
-    </div>
-
-    <div class="map-footer">
-      <button @click="goBack" class="btn-back">← Back to Tamago</button>
-    </div>
-
-    <!-- Pet Detail Modal -->
-    <div v-if="selectedPet" class="pet-detail-modal" @click="selectedPet = null">
-      <div class="modal-content" @click.stop>
-        <h3>{{ selectedPet.name }}</h3>
-        <p>👤 Owner: {{ selectedPet.owner?.name }}</p>
-        <p v-if="onlineUsers.has(selectedPet.owner?._id)" class="online-status">🟢 Online</p>
-        <p v-else class="offline-status">⚫ Offline</p>
-        <button @click="selectedPet = null" class="btn-close">Close</button>
+      <!-- Error -->
+      <div v-if="locationError" class="error">
+        ❌ {{ locationError }}
       </div>
     </div>
 
@@ -71,35 +65,31 @@
     <div v-if="selectedUser" class="user-detail-modal" @click="selectedUser = null">
       <div class="modal-content" @click.stop>
         <h3>{{ selectedUser.name }}</h3>
-        <p v-if="selectedUser.location" class="location-detail">
-          📍 Location: {{ selectedUser.location.coordinates[1].toFixed(6) }}, 
+        <p class="location-detail">
+          📍 {{ selectedUser.location.coordinates[1].toFixed(6) }}, 
           {{ selectedUser.location.coordinates[0].toFixed(6) }}
+        </p>
+        <p v-if="selectedUser.distance" class="distance-detail">
+          📏 {{ selectedUser.distance.toFixed(2) }} m away
         </p>
         <p class="online-status">🟢 Online</p>
         <button @click="selectedUser = null" class="btn-close">Close</button>
       </div>
     </div>
+
+    <div class="map-footer">
+      <button @click="goBack" class="btn-back">← Back to Tamago</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useNearbyPets, useOnlineUsers } from '../composables/useWebSocket';
 import { useRouter } from 'vue-router';
-import L from 'leaflet';
-import wsService from '../services/websocket';
-
-// Fixer les icônes par défaut de Leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png'
-});
 
 const router = useRouter();
 const {
-  nearbyPets,
   currentLocation,
   isWatchingLocation,
   locationError,
@@ -107,16 +97,10 @@ const {
   stopWatchingLocation
 } = useNearbyPets();
 
-const { onlineUsers, onlineUsersData, getOnlineUsersList } = useOnlineUsers();
+const { getOnlineUsersList } = useOnlineUsers();
 
-const selectedPet = ref(null);
 const selectedUser = ref(null);
-const map = ref(null);
-const userMarker = ref(null);
-const petMarkers = ref(new Map());
-const userMarkers = ref(new Map());
 const showPermissionModal = ref(true);
-let mapInitializing = false;
 
 function requestLocationPermission() {
   showPermissionModal.value = false;
@@ -133,207 +117,44 @@ function startTracking() {
   startWatchingLocation(1000);
 }
 
-function stopTracking() {
-  stopWatchingLocation();
-  destroyMap();
-}
-
 function goBack() {
-  destroyMap();
   stopWatchingLocation();
   router.push('/tamago');
 }
 
-function initMap() {
+// Fonction pour calculer la distance entre deux points (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000; // Rayon de la Terre en mètres
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+// Fonction pour obtenir la liste des utilisateurs avec les distances calculées
+function getUsersWithDistance() {
   if (!currentLocation.value) {
-    return;
+    return [];
   }
 
-  if (map.value || mapInitializing) {
-    return;
-  }
-
-  mapInitializing = true;
-
-  if (map.value) {
-    map.value.remove();
-    map.value = null;
-  }
-
-  const mapElement = document.getElementById('leaflet-map');
-  if (!mapElement) {
-    return;
-  }
-
-  try {
-    map.value = L.map('leaflet-map', {
-      center: [currentLocation.value.latitude, currentLocation.value.longitude],
-      zoom: 17
-    });
-
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
-      minZoom: 1,
-      crossOrigin: 'anonymous'
-    }).addTo(map.value);
-
-    // Force recalculate map size
-    setTimeout(() => {
-      if (map.value) {
-        map.value.invalidateSize();
-        updateUserMarker();
-        updatePetMarkers();
-        updateUserMarkers();
-      }
-      mapInitializing = false;
-    }, 300);
-  } catch (err) {
-    mapInitializing = false;
-  }
-}
-
-function updateUserMarker() {
-  if (!map.value) {
-    return;
-  }
-
-  if (!currentLocation.value) {
-    return;
-  }
-
-  if (userMarker.value) {
-    map.value.removeLayer(userMarker.value);
-    userMarker.value = null;
-  }
-
-  const customIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-
-  try {
-    userMarker.value = L.marker(
-      [currentLocation.value.latitude, currentLocation.value.longitude],
-      { icon: customIcon, title: 'Your location' }
-    )
-      .bindPopup('📍 Your location')
-      .addTo(map.value);
-  } catch (err) {
-    // Marker error
-  }
-}
-
-function updatePetMarkers() {
-  if (!map.value) {
-    return;
-  }
-
-  petMarkers.value.forEach((marker) => {
-    try {
-      map.value.removeLayer(marker);
-    } catch (err) {
-      // Layer already removed
-    }
-  });
-  petMarkers.value.clear();
-
-  nearbyPets.value.forEach((pet) => {
-    if (!pet.location?.coordinates) {
-      return;
-    }
-
-    const [lng, lat] = pet.location.coordinates;
-    const isOnline = onlineUsers.value.has(pet.owner?._id);
-
-    const customIcon = L.icon({
-      iconUrl: isOnline 
-        ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
-        : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    try {
-      const marker = L.marker([lat, lng], { icon: customIcon, title: pet.name })
-        .bindPopup(`<strong>${pet.name}</strong><br>Owner: ${pet.owner?.name}<br>Status: ${isOnline ? '🟢 Online' : '⚫ Offline'}`)
-        .addTo(map.value);
-
-      marker.on('click', () => {
-        selectedPet.value = pet;
-      });
-
-      petMarkers.value.set(pet._id, marker);
-    } catch (err) {
-      // Marker error
-    }
-  });
-}
-
-function updateUserMarkers() {
-  if (!map.value) {
-    return;
-  }
-
-  userMarkers.value.forEach((marker) => {
-    try {
-      map.value.removeLayer(marker);
-    } catch (err) {
-      // Layer already removed
-    }
-  });
-  userMarkers.value.clear();
-
-  const usersList = getOnlineUsersList();
-
-  usersList.forEach((user) => {
-    if (!user.location?.coordinates) {
-      return;
-    }
-
-    const [lng, lat] = user.location.coordinates;
-
-    const customIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
-    });
-
-    try {
-      const marker = L.marker([lat, lng], { icon: customIcon, title: user.name })
-        .bindPopup(`<strong>${user.name}</strong><br>📍 Online<br>Coords: ${lat.toFixed(4)}, ${lng.toFixed(4)}`)
-        .addTo(map.value);
-
-      marker.on('click', () => {
-        selectedUser.value = user;
-      });
-
-      userMarkers.value.set(user._id, marker);
-    } catch (err) {
-      // Marker error
-    }
-  });
-}
-
-function destroyMap() {
-  if (map.value) {
-    map.value.remove();
-    map.value = null;
-    petMarkers.value.clear();
-    userMarkers.value.clear();
-    userMarker.value = null;
-  }
-  mapInitializing = false;
+  return getOnlineUsersList()
+    .map(user => ({
+      ...user,
+      distance: calculateDistance(
+        currentLocation.value.latitude,
+        currentLocation.value.longitude,
+        user.location.coordinates[1],
+        user.location.coordinates[0]
+      )
+    }))
+    .sort((a, b) => a.distance - b.distance);
 }
 
 onMounted(() => {
@@ -341,231 +162,172 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  destroyMap();
   stopWatchingLocation();
 });
-
-watch(
-  () => isWatchingLocation.value,
-  async (watching) => {
-    if (watching && currentLocation.value) {
-      await nextTick();
-      setTimeout(() => {
-        if (!map.value && !mapInitializing) {
-          initMap();
-        }
-      }, 100);
-    } else if (!watching) {
-      destroyMap();
-    }
-  }
-);
-
-watch(
-  () => currentLocation.value,
-  (newLocation) => {
-    if (map.value && newLocation) {
-      updateUserMarker();
-    }
-  }
-);
-
-watch(
-  () => locationError.value,
-  (error) => {
-    // Location error handled
-  }
-);
-
-watch(
-  () => nearbyPets.value,
-  (pets) => {
-    if (map.value) {
-      updatePetMarkers();
-    }
-  },
-  { deep: true }
-);
-
-watch(
-  () => onlineUsers.value,
-  () => {
-    if (map.value) {
-      updatePetMarkers();
-    }
-  }
-);
-
-watch(
-  () => onlineUsersData.value.size,
-  () => {
-    if (map.value) {
-      updateUserMarkers();
-    }
-  }
-);
 </script>
 
 <style scoped>
-@import 'leaflet/dist/leaflet.css';
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
 
-.map-view {
+.users-view {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  background: #fff;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
   min-height: 100vh;
   position: relative;
-}
-
-.map-container {
-  flex: 1;
-  position: relative;
   overflow: hidden;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
 }
 
-.leaflet-map {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  display: block;
-  position: relative;
-  z-index: 1;
-  background: #f0f0f0;
-}
-
-.map-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
+.header {
+  padding: 1.5rem 1.5rem 1rem;
+  background: #627DE0;
+  color: white;
+  text-align: center;
   font-family: 'Pixelify Sans', monospace;
-  color: #666;
-  background: #f5f5f5;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.map-placeholder p {
-  font-size: 1.2rem;
-}
-
-.location-info {
-  background: #f0f9ff;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #ddd;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.users-list-panel {
-  background: #fff;
-  border-bottom: 1px solid #e5e5e5;
-  max-height: 250px;
-  overflow-y: auto;
-  font-family: 'Pixelify Sans', monospace;
-}
-
-.users-list-header {
-  padding: 1rem 1.5rem;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+.header h1 {
+  margin: 0;
+  font-size: 1.8rem;
   font-weight: 700;
-  color: #333;
-  font-size: 0.95rem;
 }
 
-.users-list-content {
-  display: flex;
-  flex-direction: column;
+.location-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  display: inline-block;
 }
 
-.user-item {
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.your-location {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
-  cursor: pointer;
-  transition: background 0.2s;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-family: 'Pixelify Sans', monospace;
+  border-left: 4px solid #627DE0;
 }
 
-.user-item:hover {
-  background: #f9f9f9;
+.your-location-icon {
+  font-size: 2rem;
+}
+
+.your-location-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: #000;
+  font-size: 1rem;
+}
+
+.coords {
+  margin: 0;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.users-container {
+  flex: 1;
+}
+
+.no-users {
+  text-align: center;
+  color: #999;
+  font-family: 'Pixelify Sans', monospace;
+  padding: 2rem 1rem;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #627DE0;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.user-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-left-color: #5169c7;
 }
 
 .user-avatar {
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fef3c7;
-  border-radius: 50%;
-  border: 2px solid #f59e0b;
+  font-size: 2rem;
+  flex-shrink: 0;
 }
 
 .user-info {
   flex: 1;
+  min-width: 0;
 }
 
-.user-name {
-  font-weight: 700;
+.user-info h3 {
+  margin: 0 0 0.25rem 0;
   color: #000;
-  font-size: 0.9rem;
-}
-
-.user-coords {
-  font-size: 0.75rem;
-  color: #666;
-  margin-top: 0.25rem;
-}
-
-.user-status {
   font-size: 1rem;
+  font-weight: 700;
+}
+
+.distance {
+  margin: 0.25rem 0;
+  color: #627DE0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.user-info > .coords {
+  margin: 0.25rem 0 0 0;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.status-badge {
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .error {
   background: #fee;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #fcc;
-  font-family: 'Pixelify Sans', monospace;
+  border-radius: 12px;
+  border: 2px solid #fcc;
   color: #c00;
-}
-
-.debug-info {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #0f0;
-  padding: 10px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.8rem;
-  z-index: 1001;
+  font-family: 'Pixelify Sans', monospace;
+  margin-top: 1rem;
 }
 
 .map-footer {
   padding: 1.5rem;
-  border-top: 2px solid #e5e5e5;
+  border-top: 2px solid #ddd;
   background: #fff;
   display: flex;
   justify-content: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .btn-back {
@@ -578,73 +340,12 @@ watch(
   font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-back:hover {
   background: #5169c7;
-}
-
-.marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  background: white;
-  border: 2px solid #627DE0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s;
-}
-
-.marker:hover {
-  transform: scale(1.15);
-}
-
-.custom-marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.5rem;
-  background: white;
-  border: 2px solid #627DE0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  cursor: pointer !important;
-}
-
-.custom-marker:hover {
-  transform: scale(1.15);
-}
-
-.user-position-marker {
-  background: #e3f2fd;
-  border-color: #2563eb;
-}
-
-.user-location-marker {
-  background: #fef3c7;
-  border-color: #f59e0b;
-  border-width: 3px;
-}
-
-.pet-marker {
-  background: white;
-  border-color: #999;
-}
-
-.pet-marker.online {
-  border-color: #ef4444;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-}
-
-.pet-marker.offline {
-  border-color: #999;
-  opacity: 0.7;
+  transform: translateY(-2px);
 }
 
 .permission-modal-overlay {
@@ -729,19 +430,6 @@ watch(
   background: #e0e0e0;
 }
 
-.pet-detail-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
 .user-detail-modal {
   position: fixed;
   top: 0;
@@ -759,7 +447,7 @@ watch(
   background: white;
   border-radius: 12px;
   padding: 2rem;
-  max-width: 300px;
+  max-width: 400px;
   width: 90%;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   font-family: 'Pixelify Sans', monospace;
@@ -769,6 +457,7 @@ watch(
   margin: 0 0 1rem 0;
   color: #000;
   font-size: 1.3rem;
+  font-weight: 700;
 }
 
 .modal-content p {
@@ -777,32 +466,50 @@ watch(
   font-size: 0.9rem;
 }
 
-.online-status {
-  color: #22c55e !important;
+.location-detail {
+  color: #627DE0 !important;
+  font-weight: 600;
 }
 
-.offline-status {
-  color: #666 !important;
+.distance-detail {
+  color: #627DE0 !important;
+  font-weight: 600;
+}
+
+.online-status {
+  color: #22c55e !important;
+  font-weight: 600;
+  margin-top: 1rem !important;
 }
 
 .btn-close {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
+  margin-top: 1.5rem;
+  padding: 0.75rem 1rem;
   background: #627DE0;
   color: white;
   border: none;
   border-radius: 6px;
   font-family: 'Pixelify Sans', monospace;
+  font-weight: 700;
   cursor: pointer;
   width: 100%;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-close:hover {
   background: #5169c7;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
+  .header h1 {
+    font-size: 1.4rem;
+  }
+
+  .user-card {
+    padding: 0.75rem 1rem;
+  }
+
   .map-footer {
     padding: 1rem;
   }
@@ -810,16 +517,6 @@ watch(
   .btn-back {
     padding: 0.6rem 1.2rem;
     font-size: 0.85rem;
-  }
-
-  .permission-modal {
-    padding: 2rem 1.5rem;
-  }
-
-  .marker {
-    width: 35px;
-    height: 35px;
-    font-size: 1.2rem;
   }
 }
 </style>

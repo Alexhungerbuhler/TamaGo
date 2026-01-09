@@ -150,6 +150,22 @@ export function useOnlineUsers() {
   const onlineUsers = ref(new Set());
   const onlineUsersData = ref(new Map()); // Stocker les données complètes des utilisateurs
   
+  const handleExistingUsers = (data) => {
+    // Ajouter tous les utilisateurs existants avec leur location
+    if (data.users && Array.isArray(data.users)) {
+      data.users.forEach(user => {
+        if (user.userId) {
+          onlineUsers.value.add(user.userId);
+          onlineUsersData.value.set(user.userId, {
+            _id: user.userId,
+            name: user.userName || 'Unknown',
+            location: user.location
+          });
+        }
+      });
+    }
+  };
+
   const handleUserOnline = (data) => {
     onlineUsers.value.add(data.userId);
     // Stocker les données utilisateur si disponibles
@@ -170,6 +186,9 @@ export function useOnlineUsers() {
 
   const handleUserLocation = (data) => {
     if (data.userId && data.location) {
+      // Ajouter l'utilisateur à la liste des utilisateurs en ligne
+      onlineUsers.value.add(data.userId);
+      
       // Mettre à jour la location de l'utilisateur
       const userData = onlineUsersData.value.get(data.userId);
       if (userData) {
@@ -184,11 +203,13 @@ export function useOnlineUsers() {
     }
   };
 
+  const unsubscribeExisting = wsService.on('users:existing', handleExistingUsers);
   const unsubscribeOnline = wsService.on('user:online', handleUserOnline);
   const unsubscribeOffline = wsService.on('user:offline', handleUserOffline);
   const unsubscribeUserLocation = wsService.on('user:location', handleUserLocation);
 
   onUnmounted(() => {
+    unsubscribeExisting();
     unsubscribeOnline();
     unsubscribeOffline();
     unsubscribeUserLocation();

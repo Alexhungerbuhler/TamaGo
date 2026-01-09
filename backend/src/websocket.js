@@ -54,6 +54,17 @@ export function initializeWebSocket(httpServer) {
       location: null
     });
 
+    // Envoyer la liste des utilisateurs déjà connectés au nouveau client
+    const existingUsers = Array.from(connectedUsers.values())
+      .filter(u => u.userId !== socket.userId) // Exclure l'utilisateur qui vient de se connecter
+      .map(u => ({
+        userId: u.userId,
+        userName: u.userName,
+        location: u.location
+      }));
+
+    socket.emit('users:existing', { users: existingUsers });
+
     // Notifier tous les clients qu'un utilisateur est en ligne
     io.emit('user:online', {
       userId: socket.userId,

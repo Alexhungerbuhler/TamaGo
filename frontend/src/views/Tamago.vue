@@ -63,7 +63,16 @@
     
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
-      <span v-if="!isHatched">Click {{ clicksNeeded - clickCount }} times<br/>to hatch the egg</span>
+      <span v-if="!isHatched">
+        📱 Shake your phone<br/>{{ shakeCount }}/{{ shakesNeeded }} times
+      </span>
+      <button 
+        v-if="!isHatched && needsPermission && !permissionGranted" 
+        @click="requestMotionPermission"
+        :class="$style.permissionButton"
+      >
+        🔓 Enable Shake
+      </button>
     </b>
     
     <!-- Navigation arrows -->
@@ -98,6 +107,10 @@ const currentPet = computed(() => petsStore.currentPet);
 
 // Modal state
 const showNamePetModal = ref(false);
+
+// Permission state for iOS
+const needsPermission = ref(false);
+const permissionGranted = ref(false);
 
 // Egg hatching system
 const clickCount = ref(0);
@@ -207,16 +220,10 @@ const saveHatchedPet = (petId) => {
   localStorage.setItem(`hatched_pet_image_${petId}`, hatchedPetImage.value);
 };
 
-// Handle egg click - increment click count and check for hatching
+// Handle egg click - DISABLED (shake only)
 const handleEggClick = () => {
-  if (isHatched.value) return;
-  
-  clickCount.value++;
-  console.log(`Egg clicked: ${clickCount.value}/${clicksNeeded}`);
-  
-  if (clickCount.value >= clicksNeeded) {
-    hatchEgg();
-  }
+  // Clics désactivés - utiliser le shake du téléphone
+  return;
 };
 
 // Hatch the egg
@@ -316,17 +323,25 @@ const resetEgg = () => {
 };
 
 // Device shake detection for mobile
+const shakeCount = ref(0);
+const shakesNeeded = 5;
+
 const handleDeviceShake = () => {
   if (isHatched.value) return;
   
+  shakeCount.value++;
   isShaking.value = true;
-  console.log('Device shaken!');
-  hatchEgg();
+  console.log(`Device shaken! ${shakeCount.value}/${shakesNeeded}`);
   
-  // Reset shake indicator after animation
+  // Reset shake animation after a short delay
   setTimeout(() => {
     isShaking.value = false;
-  }, 1000);
+  }, 300);
+  
+  // Check if enough shakes to hatch
+  if (shakeCount.value >= shakesNeeded) {
+    hatchEgg();
+  }
 };
 
 // Navigation functions (defined first so they can be referenced in allIcons)
@@ -631,43 +646,44 @@ onMounted(async () => {
   // NE PAS charger hatched pet depuis localStorage ici
   // car on vient de gérer l'état ci-dessus
   // loadHatchedPet();
+});
+
+// Setup device shake listener for mobile
+let lastShakeTime = 0;
+const shakeThreshold = 15;
+const shakeTimeout = 500;
+
+const onDeviceMotion = (event) => {
+  const acceleration = event.acceleration;
+  if (!acceleration) return;
   
-  // Setup device shake listener for mobile
-  let lastShakeTime = 0;
-  const shakeThreshold = 15;
-  const shakeTimeout = 500;
+  const x = acceleration.x || 0;
+  const y = acceleration.y || 0;
+  const z = acceleration.z || 0;
   
-  const onDeviceMotion = (event) => {
-    const acceleration = event.acceleration;
-    if (!acceleration) return;
-    
-    const x = acceleration.x || 0;
-    const y = acceleration.y || 0;
-    const z = acceleration.z || 0;
-    
-    const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
-    
-    if (totalAcceleration > shakeThreshold) {
-      const now = Date.now();
-      if (now - lastShakeTime > shakeTimeout) {
-        handleDeviceShake();
-        lastShakeTime = now;
-      }
+  const totalAcceleration = Math.sqrt(x * x + y * y + z * z);
+  
+  if (totalAcceleration > shakeThreshold) {
+    const now = Date.now();
+    if (now - lastShakeTime > shakeTimeout) {
+      handleDeviceShake();
+      lastShakeTime = now;
     }
-  };
+  }
+};
+
+// Initialize motion sensor on mount
+onMounted(() => {
   
-  // Request permission for iOS 13+
+  // Check if permission is needed (iOS 13+)
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission()
-      .then(permissionState => {
-        if (permissionState === 'granted') {
-          window.addEventListener('devicemotion', onDeviceMotion);
-        }
-      })
-      .catch(console.error);
+    needsPermission.value = true;
+    console.log('iOS detected - permission required for motion');
   } else {
-    // For Android and older iOS
+    // For Android and older iOS - start immediately
     window.addEventListener('devicemotion', onDeviceMotion);
+    permissionGranted.value = true;
+    console.log('Motion sensor started (Android/older iOS)');
   }
   
   // Cleanup
@@ -676,6 +692,24 @@ onMounted(async () => {
     stopPetMovement();
   };
 });
+
+// Function to request motion permission (iOS)
+const requestMotionPermission = async () => {
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    try {
+      const permissionState = await DeviceMotionEvent.requestPermission();
+      if (permissionState === 'granted') {
+        permissionGranted.value = true;
+        window.addEventListener('devicemotion', onDeviceMotion);
+        console.log('✅ Motion permission granted');
+      } else {
+        console.warn('⚠️ Motion permission denied');
+      }
+    } catch (error) {
+      console.error('Error requesting motion permission:', error);
+    }
+  }
+};
 </script>
 
 <style module>
@@ -1075,6 +1109,34 @@ onMounted(async () => {
   font-size: 20px;
   flex-shrink: 0;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.permissionButton {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6bcf7f 0%, #5ab36b 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Pixelify Sans', monospace;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(107, 207, 127, 0.3);
+  transition: all 0.2s;
+}
+
+.permissionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 207, 127, 0.4);
+}
+
+.permissionButton:active {
+  transform: translateY(0);
 }
 
 .groupContainer {

@@ -9,7 +9,7 @@ export async function manualTick(_req, res, next) {
 
     for (const pet of pets) {
       pet.hunger = clamp(pet.hunger - 5);
-      pet.hygiene = clamp(pet.hygiene - 5);
+      pet.hygiene = clamp(pet.hygiene - 8.33); // -25% en 90 secondes (3 ticks de 30s)
       pet.energy = clamp(pet.energy - 5);
       pet.fun = clamp(pet.fun - 5);
       await pet.save();

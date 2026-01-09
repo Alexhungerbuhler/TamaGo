@@ -51,6 +51,16 @@
     <!-- Pet name - shown above hatched pet -->
     <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
+    <!-- Crottes / Poops - displayed based on hygiene level -->
+    <div
+      v-for="(poop, index) in poopsPositions"
+      :key="`poop-${index}`"
+      :class="$style.poop"
+      :style="{ left: poop.x + 'px', top: poop.y + 'px' }"
+    >
+      💩
+    </div>
+    
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
       <span v-if="!isHatched">Click {{ clicksNeeded - clickCount }} times<br/>to hatch the egg</span>
@@ -88,6 +98,36 @@ const isShaking = ref(false);
 const petPositionX = ref(0); // Position in pixels (-100 to 100)
 const petPositionY = ref(0); 
 const petMovementInterval = ref(null);
+
+// Poop system - based on hygiene level
+const nbPoops = computed(() => {
+  if (!currentPet.value || !isHatched.value) return 0;
+  const hygiene = currentPet.value.hygiene || 0;
+  return Math.floor((100 - hygiene) / 25); // 0 à 4 crottes
+});
+
+const poopsPositions = computed(() => {
+  const positions = [];
+  const count = nbPoops.value;
+  
+  // Générer des positions aléatoires fixes pour chaque niveau d'hygiène
+  // On utilise le niveau d'hygiène comme seed pour garder les positions cohérentes
+  const hygiene = currentPet.value?.hygiene || 100;
+  const seed = Math.floor(hygiene / 25); // 0-4 basé sur l'hygiène
+  
+  for (let i = 0; i < count; i++) {
+    // Positions pseudo-aléatoires mais cohérentes
+    const angle = (seed * 1000 + i * 137.5) % 360; // Angle en degrés
+    const radius = 50 + (i * 30) + ((seed * 17 + i * 23) % 50);
+    
+    const x = 180 + Math.cos(angle * Math.PI / 180) * radius;
+    const y = 350 + Math.sin(angle * Math.PI / 180) * radius;
+    
+    positions.push({ x, y });
+  }
+  
+  return positions;
+});
 
 // Start random pet movement (calm and slow, like walking)
 const startPetMovement = () => {
@@ -1001,6 +1041,30 @@ onMounted(async () => {
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.2s;
+}
+
+/* Poop styling */
+.poop {
+  position: absolute;
+  font-size: 32px;
+  z-index: 5;
+  animation: poopAppear 0.3s ease-in-out;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes poopAppear {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
 }
 
 .pixilFrame01Parent {

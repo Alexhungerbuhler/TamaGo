@@ -44,16 +44,19 @@ class WebSocketService {
 
     // Événements de connexion
     this.socket.on('connect', () => {
+      console.log('🔌 WebSocket connected:', WS_URL);
       this.isConnected = true;
       this.emit('connection:established');
     });
 
     this.socket.on('disconnect', () => {
+      console.log('❌ WebSocket disconnected');
       this.isConnected = false;
       this.emit('connection:lost');
     });
 
     this.socket.on('connect_error', (error) => {
+      console.error('❌ WebSocket error:', error);
       this.emit('connection:error', error);
     });
 
@@ -66,20 +69,27 @@ class WebSocketService {
    */
   setupServerListeners() {
     // Utilisateurs online/offline
+    this.socket.on('users:existing', (data) => {
+      console.log('📊 users:existing reçu:', data);
+      this.emit('users:existing', data);
+    });
+
     this.socket.on('user:online', (data) => {
+      console.log('🟢 user:online reçu:', data);
       this.emit('user:online', data);
     });
 
     this.socket.on('user:offline', (data) => {
+      console.log('🔴 user:offline reçu:', data);
       this.emit('user:offline', data);
     });
 
     // Localisation des utilisateurs
     this.socket.on('user:location', (data) => {
+      console.log('📍 user:location reçu:', data);
       this.emit('user:location', data);
     });
-
-    // Mise à jour des pets
+        // Mise à jour des pets
     this.socket.on('pet:updated', (data) => {
       this.emit('pet:updated', data);
     });

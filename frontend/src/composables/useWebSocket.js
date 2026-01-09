@@ -151,6 +151,7 @@ export function useOnlineUsers() {
   const onlineUsersData = ref(new Map()); // Stocker les données complètes des utilisateurs
   
   const handleExistingUsers = (data) => {
+    console.log('📊 handleExistingUsers reçu:', data);
     // Ajouter tous les utilisateurs existants avec leur location
     if (data.users && Array.isArray(data.users)) {
       data.users.forEach(user => {
@@ -163,10 +164,12 @@ export function useOnlineUsers() {
           });
         }
       });
+      console.log('✅ Utilisateurs existants ajoutés, total:', onlineUsersData.value.size);
     }
   };
 
   const handleUserOnline = (data) => {
+    console.log('🟢 handleUserOnline reçu:', data);
     onlineUsers.value.add(data.userId);
     // Stocker les données utilisateur si disponibles
     if (data.userId) {
@@ -176,15 +179,18 @@ export function useOnlineUsers() {
         location: data.location,
         connectedAt: data.connectedAt
       });
+      console.log('✅ Utilisateur en ligne ajouté, total:', onlineUsersData.value.size);
     }
   };
 
   const handleUserOffline = (data) => {
+    console.log('🔴 handleUserOffline reçu:', data);
     onlineUsers.value.delete(data.userId);
     onlineUsersData.value.delete(data.userId);
   };
 
   const handleUserLocation = (data) => {
+    console.log('📍 handleUserLocation reçu:', data);
     if (data.userId && data.location) {
       // Ajouter l'utilisateur à la liste des utilisateurs en ligne
       onlineUsers.value.add(data.userId);
@@ -200,6 +206,8 @@ export function useOnlineUsers() {
           location: data.location
         });
       }
+      console.log('✅ Location mise à jour, utilisateurs avec location:', 
+        Array.from(onlineUsersData.value.values()).filter(u => u.location).length);
     }
   };
 

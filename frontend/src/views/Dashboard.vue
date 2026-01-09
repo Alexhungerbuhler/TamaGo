@@ -44,23 +44,47 @@ onMounted(async () => {
   // Charger les pets de l'utilisateur pour savoir s'il peut continuer
   if (authStore.user?.id) {
     try {
-      await petsStore.fetchPets({ userId: authStore.user.id });
+      console.log('[Dashboard] Loading pets for user:', authStore.user.id);
+      await petsStore.fetchPets({ userId: authStore.user.id, limit: 10 });
+      console.log('[Dashboard] Pets loaded:', petsStore.petsList);
+      console.log('[Dashboard] Has pets:', hasPets.value);
     } catch (err) {
       console.error('Erreur lors du chargement des pets:', err);
     }
+  } else {
+    console.error('[Dashboard] No user ID found');
   }
 });
 
 function continueGame() {
-  // Rediriger vers le premier pet
-  if (petsStore.petsList && petsStore.petsList.length > 0) {
-    const firstPet = petsStore.petsList[0];
-    const petId = firstPet._id || firstPet.id;
-    router.push(`/tamagotchi/${petId}`);
-  }
+  // Rediriger vers /tamago pour continuer avec le pet existant
+  router.push('/tamago');
 }
 
-function startNewGame() {
+async function startNewGame() {
+  // Si l'utilisateur a déjà un pet, demander confirmation
+  if (hasPets.value) {
+    const confirmed = confirm('Voulez-vous vraiment recommencer ? Cela supprimera votre Tamagotchi actuel.');
+    if (!confirmed) {
+      return;
+    }
+    
+    // Supprimer le pet existant
+    try {
+      const firstPet = petsStore.petsList[0];
+      const petId = firstPet._id || firstPet.id;
+      await petsStore.deletePet(petId);
+      console.log('[Dashboard] Pet deleted, starting new game');
+      
+      // Nettoyer le localStorage pour ce pet
+      localStorage.removeItem(`hatched_pet_image_${petId}`);
+    } catch (err) {
+      console.error('Erreur lors de la suppression du pet:', err);
+      alert('Erreur lors de la suppression du Tamagotchi');
+      return;
+    }
+  }
+  
   // Rediriger vers la page de création d'un nouveau tamagotchi
   router.push('/tamago');
 }

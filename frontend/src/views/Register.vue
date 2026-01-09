@@ -57,8 +57,13 @@ onMounted(() => {
 });
 
 function onRegisterSuccess({ user }) {
-  // Rediriger vers le dashboard après inscription
-  router.push('/dashboard');
+  // Après inscription réussie, rediriger vers login
+  // Car l'inscription ne retourne pas de token
+  console.log('Registration successful for user:', user);
+  router.push({
+    path: '/login',
+    query: { message: 'Registration successful! Please login.' }
+  });
 }
 
 function onPetCreated(pet) {

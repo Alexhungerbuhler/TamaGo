@@ -71,9 +71,11 @@
 import { useRouter } from 'vue-router';
 import { ref, computed, onMounted } from 'vue';
 import { usePetsStore } from '../store/pets';
+import { useAuthStore } from '../store/index';
 
 const router = useRouter();
 const petsStore = usePetsStore();
+const authStore = useAuthStore();
 const selectedIconIndex = ref(0);
 const currentPet = computed(() => petsStore.currentPet);
 
@@ -129,21 +131,24 @@ const getRandomPet = () => {
 };
 
 // Load hatched pet from localStorage if it exists
-const loadHatchedPet = () => {
-  const saved = localStorage.getItem('hatched_pet_image');
+const loadHatchedPet = (petId) => {
+  if (!petId) return;
+  
+  const saved = localStorage.getItem(`hatched_pet_image_${petId}`);
   if (saved) {
     isHatched.value = true;
     hatchedPetImage.value = saved;
     clickCount.value = clicksNeeded; // Mark as hatched
-    console.log('Loaded hatched pet:', hatchedPetImage.value);
+    console.log('Loaded hatched pet for ID', petId, ':', hatchedPetImage.value);
     // Start movement for loaded pet
     startPetMovement();
   }
 };
 
 // Save hatched pet to localStorage
-const saveHatchedPet = () => {
-  localStorage.setItem('hatched_pet_image', hatchedPetImage.value);
+const saveHatchedPet = (petId) => {
+  if (!petId) return;
+  localStorage.setItem(`hatched_pet_image_${petId}`, hatchedPetImage.value);
 };
 
 // Handle egg click - increment click count and check for hatching
@@ -160,39 +165,66 @@ const handleEggClick = () => {
 
 // Hatch the egg
 const hatchEgg = async () => {
+  console.log('[hatchEgg] Starting egg hatching process...');
   isHatched.value = true;
   hatchedPetImage.value = getRandomPet();
-  saveHatchedPet();
-  console.log('Egg hatched! Pet:', hatchedPetImage.value);
+  console.log('[hatchEgg] Egg hatched! Pet image:', hatchedPetImage.value);
   
   // Create a pet in the database if none exists
   try {
+    const userId = authStore.user?.id;
+    console.log('[hatchEgg] User ID:', userId);
+    if (!userId) {
+      console.error('[hatchEgg] Cannot create pet: No user ID');
+      return;
+    }
+    
     // Check if we already have a pet
-    await petsStore.fetchPets({ limit: 1 });
+    console.log('[hatchEgg] Checking for existing pets...');
+    await petsStore.fetchPets({ limit: 1, userId });
+    console.log('[hatchEgg] Pets found:', petsStore.petsList.length);
     
     if (petsStore.petsList.length === 0) {
       // No pet exists, create one
-      console.log('Creating new pet in database...');
+      console.log('[hatchEgg] Creating new pet in database...');
       const newPet = await petsStore.createPet({
-        name: 'My Tamagotchi',
+        name: 'My Tamagotchi', // Nom par défaut, pourra être changé
         lat: 0,
         lng: 0
       });
-      console.log('Pet created:', newPet);
+      console.log('[hatchEgg] Pet created successfully:', newPet);
+      
+      // Sauvegarder l'image du pet avec son ID
+      saveHatchedPet(newPet._id);
       
       // Load the newly created pet
+      console.log('[hatchEgg] Loading newly created pet...');
       await petsStore.fetchPet(newPet._id);
+      console.log('[hatchEgg] Current pet after fetch:', petsStore.currentPet);
     } else {
       // Pet already exists, just load it
-      console.log('Loading existing pet...');
-      await petsStore.fetchPet(petsStore.petsList[0]._id);
+      console.log('[hatchEgg] Pet already exists, loading:', petsStore.petsList[0]);
+      const existingPet = petsStore.petsList[0];
+      
+      // Charger l'image sauvegardée ou en générer une nouvelle
+      const savedImage = localStorage.getItem(`hatched_pet_image_${existingPet._id}`);
+      if (savedImage) {
+        hatchedPetImage.value = savedImage;
+      } else {
+        saveHatchedPet(existingPet._id);
+      }
+      
+      await petsStore.fetchPet(existingPet._id);
+      console.log('[hatchEgg] Current pet after fetch:', petsStore.currentPet);
     }
   } catch (error) {
-    console.error('Error creating/loading pet:', error);
+    console.error('[hatchEgg] Error creating/loading pet:', error);
   }
   
   // Start pet movement
+  console.log('[hatchEgg] Starting pet movement...');
   startPetMovement();
+  console.log('[hatchEgg] Egg hatching process complete!');
 };
 
 // Reset egg (for testing or to hatch again)
@@ -304,10 +336,10 @@ const getStatColor = (value) => {
 
 // Get gauge image based on stat value
 const getGaugeImage = (value) => {
-  if (value >= 75) return '/icons/Icon_JaugeVerte.svg'; // Green
-  if (value >= 50) return '/icons/Icon_JaugeJaune.svg'; // Yellow
-  if (value >= 25) return '/icons/Icon_JaugeOrange.svg'; // Orange
-  return '/icons/Icon_JaugeRouge.svg'; // Red
+  if (value === 100) return '/icons/Icon_JaugeVerte.svg'; // Green for 100
+  if (value >= 75) return '/icons/Icon_JaugeJaune.svg'; // Yellow for 75-99
+  if (value >= 50) return '/icons/Icon_JaugeOrange.svg'; // Orange for 50-74
+  return '/icons/Icon_JaugeRouge.svg'; // Red for 0-49
 };
 
 // Get gauge style based on stat value (Orange est la référence parfaite)
@@ -327,10 +359,10 @@ const getGaugeStyle = (value) => {
   // Jauge Orange - left à 20%
   if (value >= 25 && value < 50) {
     return { 
-      width: '60px', 
+      width: '40px', 
       height: '60px', 
       position: 'absolute', 
-      top: '50%',
+      top: '20%',
       left: '20%',
       transform: 'translate(-50%, -50%)' 
     };
@@ -376,7 +408,8 @@ const handleUse = async () => {
       console.log('Before action - Current stats:', {
         hunger: currentPet.value.hunger,
         hygiene: currentPet.value.hygiene,
-        energy: currentPet.value.energy
+        energy: currentPet.value.energy,
+        fun: currentPet.value.fun
       });
       
       let result;
@@ -409,8 +442,13 @@ const handleUse = async () => {
       console.log('After refresh - Current stats:', {
         hunger: currentPet.value.hunger,
         hygiene: currentPet.value.hygiene,
-        energy: currentPet.value.energy
+        energy: currentPet.value.energy,
+        fun: currentPet.value.fun
       });
+      
+      // Force reactivity update by triggering a re-render
+      // This is a workaround for Pinia reactivity issues
+      selectedIconIndex.value = selectedIconIndex.value;
       
     } catch (error) {
       console.error('Erreur lors de l\'exécution de l\'action:', error);
@@ -421,23 +459,101 @@ const handleUse = async () => {
 // Fetch the first pet's data on component mount
 onMounted(async () => {
   try {
-    console.log('Fetching pets...');
-    await petsStore.fetchPets({ limit: 1 });
+    console.log('=== Tamago onMounted ===');
+    console.log('AuthStore state:', {
+      isAuthenticated: authStore.isAuthenticated,
+      user: authStore.user,
+      token: authStore.token ? 'exists' : 'missing'
+    });
+    
+    // Vérifier que l'utilisateur est connecté
+    if (!authStore.isAuthenticated) {
+      console.error('User not authenticated');
+      router.push('/login');
+      return;
+    }
+    
+    const userId = authStore.user?.id;
+    console.log('User ID extracted:', userId);
+    
+    if (!userId) {
+      console.error('No user ID found. User data:', authStore.user);
+      console.error('Attempting to restore auth from localStorage...');
+      
+      // Essayer de restaurer l'authentification
+      const savedUser = localStorage.getItem('tamago_user');
+      const savedToken = localStorage.getItem('tamago_auth_token');
+      console.log('Saved user from localStorage:', savedUser);
+      console.log('Saved token from localStorage:', savedToken ? 'exists' : 'missing');
+      
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          console.log('Parsed user:', parsedUser);
+        } catch (e) {
+          console.error('Failed to parse saved user:', e);
+        }
+      }
+      
+      // Si toujours pas d'ID, rediriger vers login
+      if (!authStore.user?.id) {
+        console.error('Cannot retrieve user ID - redirecting to login');
+        router.push('/login');
+        return;
+      }
+    }
+    
+    console.log('Fetching pets for user:', userId);
+    await petsStore.fetchPets({ limit: 1, userId });
     console.log('Pets list:', petsStore.petsList);
     
     if (petsStore.petsList.length > 0) {
-      console.log('Loading pet:', petsStore.petsList[0]);
-      await petsStore.fetchPet(petsStore.petsList[0]._id);
+      // L'utilisateur a déjà un tamagotchi, le charger
+      console.log('Loading existing pet:', petsStore.petsList[0]);
+      const existingPet = petsStore.petsList[0];
+      await petsStore.fetchPet(existingPet._id);
       console.log('Current pet loaded:', petsStore.currentPet);
+      
+      // Charger l'image sauvegardée ou en générer une nouvelle
+      const savedImage = localStorage.getItem(`hatched_pet_image_${existingPet._id}`);
+      if (savedImage) {
+        hatchedPetImage.value = savedImage;
+        console.log('Loaded saved pet image:', savedImage);
+      } else {
+        hatchedPetImage.value = getRandomPet();
+        saveHatchedPet(existingPet._id);
+        console.log('Generated new pet image:', hatchedPetImage.value);
+      }
+      
+      // Marquer l'œuf comme éclos et afficher le pet
+      isHatched.value = true;
+      startPetMovement();
     } else {
-      console.warn('No pets found in the list');
+      // Nouveau joueur ou incohérence entre localStorage et DB
+      console.log('No pets in database');
+      
+      // Nettoyer le localStorage au cas où il y aurait une incohérence
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('hatched_pet_image_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Réinitialiser l'état
+      isHatched.value = false;
+      hatchedPetImage.value = '';
+      clickCount.value = 0;
+      
+      console.log('New player - showing egg to hatch');
     }
   } catch (error) {
     console.error('Erreur lors du chargement du pet:', error);
   }
   
-  // Load hatched pet from localStorage if it exists
-  loadHatchedPet();
+  // NE PAS charger hatched pet depuis localStorage ici
+  // car on vient de gérer l'état ci-dessus
+  // loadHatchedPet();
   
   // Setup device shake listener for mobile
   let lastShakeTime = 0;

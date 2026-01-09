@@ -4,11 +4,14 @@
       <div class="modal-content">
         <h2 class="title">Choose a name<br>for your pet:</h2>
         
+        <!-- Permanent hint in gray -->
+        <p class="field-hint-permanent">
+          3-20 caractères, lettres uniquement
+        </p>
+        
+        <!-- Dynamic error message in red (only when error) -->
         <p v-if="validationError" class="field-error">
           <img src="/icons/WarningIcon.svg" class="error-icon" alt="warning"> {{ validationError }}
-        </p>
-        <p v-else class="field-hint">
-          <img src="/icons/WarningIcon.svg" class="error-icon" alt="warning"> 3-20 caractères, lettres uniquement
         </p>
 
         <form @submit.prevent="handleSubmit" class="form">
@@ -182,22 +185,20 @@ watch(() => props.isOpen, (newVal) => {
   font-size: 1.5rem;
   font-weight: 700;
   color: #000000;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1rem;
   line-height: 1.4;
 }
 
-.field-error {
-  margin: 0 0 1.5rem;
-  font-size: 0.95rem;
-  color: #D5230C;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+.field-hint-permanent {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #808080;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5;
 }
 
-.field-hint {
+.field-error {
   margin: 0 0 1.5rem;
   font-size: 0.95rem;
   color: #D5230C;

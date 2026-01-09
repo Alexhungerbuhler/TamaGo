@@ -23,11 +23,40 @@
         Log out
       </button>
     </div>
+
+    <!-- Modal de confirmation suppression -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
+      <div class="modal-container">
+        <div class="modal-content">
+          <h2 class="modal-title">⚠️ Delete Current Pet?</h2>
+          
+          <p class="modal-warning">
+            <img src="/icons/WarningIcon.svg" class="warning-icon" alt="warning">
+            Starting a new game will permanently delete your current Tamagotchi!
+          </p>
+
+          <div class="modal-buttons">
+            <button 
+              class="btn-cancel"
+              @click="showDeleteModal = false"
+            >
+              Cancel
+            </button>
+            <button 
+              class="btn-confirm"
+              @click="confirmDelete"
+            >
+              Delete & Start New
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/index';
 import { usePetsStore } from '@/store/pets';
@@ -35,6 +64,8 @@ import { usePetsStore } from '@/store/pets';
 const router = useRouter();
 const authStore = useAuthStore();
 const petsStore = usePetsStore();
+
+const showDeleteModal = ref(false);
 
 const hasPets = computed(() => {
   return petsStore.petsList && petsStore.petsList.length > 0;
@@ -62,25 +93,32 @@ function continueGame() {
 }
 
 async function startNewGame() {
-  // Si l'utilisateur a déjà un pet, le supprimer directement sans demander
+  // Si l'utilisateur a déjà un pet, afficher la modal de confirmation
   if (hasPets.value) {
-    try {
-      const firstPet = petsStore.petsList[0];
-      const petId = firstPet._id || firstPet.id;
-      await petsStore.deletePet(petId);
-      console.log('[Dashboard] Pet deleted, starting new game');
-      
-      // Nettoyer le localStorage pour ce pet
-      localStorage.removeItem(`hatched_pet_image_${petId}`);
-    } catch (err) {
-      console.error('Erreur lors de la suppression du pet:', err);
-      alert('Erreur lors de la suppression du Tamagotchi');
-      return;
-    }
+    showDeleteModal.value = true;
+  } else {
+    // Sinon, rediriger directement vers /tamago
+    router.push('/tamago');
   }
-  
-  // Rediriger vers la page de création d'un nouveau tamagotchi
-  router.push('/tamago');
+}
+
+async function confirmDelete() {
+  try {
+    const firstPet = petsStore.petsList[0];
+    const petId = firstPet._id || firstPet.id;
+    await petsStore.deletePet(petId);
+    console.log('[Dashboard] Pet deleted, starting new game');
+    
+    // Nettoyer le localStorage pour ce pet
+    localStorage.removeItem(`hatched_pet_image_${petId}`);
+    
+    // Fermer la modal et rediriger
+    showDeleteModal.value = false;
+    router.push('/tamago');
+  } catch (err) {
+    console.error('Erreur lors de la suppression du pet:', err);
+    alert('Erreur lors de la suppression du Tamagotchi');
+  }
 }
 
 async function logout() {
@@ -189,6 +227,128 @@ async function logout() {
 
 .btn-logout:active {
   transform: scale(0.98);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-container {
+  width: 90%;
+  max-width: 450px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 2rem;
+  border: 5px solid #000000;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
+}
+
+.modal-warning {
+  margin: 0 0 2rem;
+  font-size: 1rem;
+  color: #D5230C;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.warning-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 4px solid #000000;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Pixelify Sans', monospace;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #e0e0e0;
+  color: #000000;
+}
+
+.btn-cancel:hover {
+  background: #d0d0d0;
+  transform: translateY(-2px);
+}
+
+.btn-confirm {
+  background: #E06264;
+  color: #ffffff;
+}
+
+.btn-confirm:hover {
+  background: #c74f51;
+  transform: translateY(-2px);
+}
+
+.btn-cancel:active,
+.btn-confirm:active {
+  transform: translateY(0);
 }
 
 /* Mobile optimizations */

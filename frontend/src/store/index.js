@@ -6,10 +6,25 @@ import wsService from '../services/websocket';
 const TOKEN_KEY = 'tamago_auth_token';
 const USER_KEY = 'tamago_user';
 
+// Fonction pour normaliser l'objet user (convertir _id en id si nécessaire)
+function normalizeUser(userData) {
+  if (!userData) return null;
+  
+  // Si l'user a _id mais pas id, normaliser
+  if (userData._id && !userData.id) {
+    return {
+      ...userData,
+      id: userData._id
+    };
+  }
+  
+  return userData;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   // State
   const token = ref(localStorage.getItem(TOKEN_KEY) || null);
-  const user = ref(JSON.parse(localStorage.getItem(USER_KEY) || 'null'));
+  const user = ref(normalizeUser(JSON.parse(localStorage.getItem(USER_KEY) || 'null')));
   const loading = ref(false);
   const error = ref(null);
 
@@ -20,11 +35,11 @@ export const useAuthStore = defineStore('auth', () => {
   // Actions
   function setAuth(authToken, userData) {
     token.value = authToken;
-    user.value = userData;
+    user.value = normalizeUser(userData);
     
     // Persistance localStorage
     localStorage.setItem(TOKEN_KEY, authToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    localStorage.setItem(USER_KEY, JSON.stringify(normalizeUser(userData)));
   }
 
   function clearAuth() {
@@ -45,7 +60,8 @@ export const useAuthStore = defineStore('auth', () => {
       const data = response.data;
       
       // Stockage du token et des données utilisateur
-      setAuth(data.token, { name, id: data.userId || data.user?.id });
+      // data.user contient { _id, name, ... }
+      setAuth(data.token, { name: data.user.name, id: data.user._id });
       
       // Connexion WebSocket
       wsService.connect(data.token);
@@ -67,10 +83,9 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await authService.register(name, password);
       const data = response.data;
       
-      // Auto-login après inscription
-      if (data.token) {
-        setAuth(data.token, { name, id: data.userId || data.user?.id });
-      }
+      // data contient directement l'utilisateur créé { _id, name }
+      // Pas de token car il faut se connecter après inscription
+      // On ne fait PAS d'auto-login ici
       
       return data;
     } catch (err) {
@@ -104,7 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Reconnexion WebSocket automatique
       wsService.connect(savedToken);
       token.value = savedToken;
-      user.value = JSON.parse(savedUser);
+      user.value = normalizeUser(JSON.parse(savedUser));
     }
   }
 

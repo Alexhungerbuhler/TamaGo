@@ -147,12 +147,14 @@ export const usePetsStore = defineStore('pets', () => {
 
     try {
       const response = await petsService.getById(id);
-      currentPet.value = response.data;
+      
+      // Force reactivity by creating a new object reference
+      currentPet.value = { ...response.data };
       
       // Mettre à jour dans la liste si présent
       const index = pets.value.findIndex(p => p._id === id || p.id === id);
       if (index !== -1) {
-        pets.value[index] = response.data;
+        pets.value[index] = { ...response.data };
       }
       
       return currentPet.value;

@@ -252,7 +252,6 @@ export async function sleepPet(req, res, next) {
     
     const updated = await updateStats(req.params.id, req.user._id, (pet) => {
       pet.energy += 25;
-      pet.hunger -= 10;
     });
     
     if (!updated) return res.sendStatus(404);
@@ -274,8 +273,8 @@ export async function playPet(req, res, next) {
     
     const updated = await updateStats(req.params.id, req.user._id, (pet) => {
       pet.fun += 25;
-      pet.energy -= 20;
-      pet.hunger -= 15;
+      pet.energy -= 25;
+      pet.hunger -= 25;
     });
     
     if (!updated) return res.sendStatus(404);

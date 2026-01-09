@@ -74,6 +74,12 @@
     <div :class="$style.pixilFrame01Parent" @click="handleUse">
       <img :class="$style.pixilFrame01Icon" src="/Arrows/Group 23.svg" alt="button-bg" />
     </div>
+    
+    <!-- Name Pet Modal -->
+    <NamePetModal 
+      :isOpen="showNamePetModal" 
+      @submit="handlePetNameSubmit"
+    />
   </div>
 </template>
 
@@ -82,12 +88,16 @@ import { useRouter } from 'vue-router';
 import { ref, computed, onMounted } from 'vue';
 import { usePetsStore } from '../store/pets';
 import { useAuthStore } from '../store/index';
+import NamePetModal from '../components/NamePetModal.vue';
 
 const router = useRouter();
 const petsStore = usePetsStore();
 const authStore = useAuthStore();
 const selectedIconIndex = ref(0);
 const currentPet = computed(() => petsStore.currentPet);
+
+// Modal state
+const showNamePetModal = ref(false);
 
 // Egg hatching system
 const clickCount = ref(0);
@@ -210,7 +220,7 @@ const hatchEgg = async () => {
   hatchedPetImage.value = getRandomPet();
   console.log('[hatchEgg] Egg hatched! Pet image:', hatchedPetImage.value);
   
-  // Create a pet in the database if none exists
+  // Check if user already has a pet
   try {
     const userId = authStore.user?.id;
     console.log('[hatchEgg] User ID:', userId);
@@ -225,22 +235,9 @@ const hatchEgg = async () => {
     console.log('[hatchEgg] Pets found:', petsStore.petsList.length);
     
     if (petsStore.petsList.length === 0) {
-      // No pet exists, create one
-      console.log('[hatchEgg] Creating new pet in database...');
-      const newPet = await petsStore.createPet({
-        name: 'My Tamagotchi', // Nom par défaut, pourra être changé
-        lat: 0,
-        lng: 0
-      });
-      console.log('[hatchEgg] Pet created successfully:', newPet);
-      
-      // Sauvegarder l'image du pet avec son ID
-      saveHatchedPet(newPet._id);
-      
-      // Load the newly created pet
-      console.log('[hatchEgg] Loading newly created pet...');
-      await petsStore.fetchPet(newPet._id);
-      console.log('[hatchEgg] Current pet after fetch:', petsStore.currentPet);
+      // No pet exists, show name modal
+      console.log('[hatchEgg] No pet found, showing name modal...');
+      showNamePetModal.value = true;
     } else {
       // Pet already exists, just load it
       console.log('[hatchEgg] Pet already exists, loading:', petsStore.petsList[0]);
@@ -256,15 +253,49 @@ const hatchEgg = async () => {
       
       await petsStore.fetchPet(existingPet._id);
       console.log('[hatchEgg] Current pet after fetch:', petsStore.currentPet);
+      
+      // Start pet movement for existing pet
+      startPetMovement();
     }
   } catch (error) {
-    console.error('[hatchEgg] Error creating/loading pet:', error);
+    console.error('[hatchEgg] Error checking for existing pet:', error);
   }
   
-  // Start pet movement
-  console.log('[hatchEgg] Starting pet movement...');
-  startPetMovement();
   console.log('[hatchEgg] Egg hatching process complete!');
+};
+
+// Handle pet name submission from modal
+const handlePetNameSubmit = async (petName) => {
+  console.log('[handlePetNameSubmit] Creating pet with name:', petName);
+  
+  try {
+    // Create the pet with the given name
+    const newPet = await petsStore.createPet({
+      name: petName,
+      lat: 0,
+      lng: 0
+    });
+    console.log('[handlePetNameSubmit] Pet created successfully:', newPet);
+    
+    // Save the hatched pet image with pet ID
+    saveHatchedPet(newPet._id);
+    
+    // Load the newly created pet
+    console.log('[handlePetNameSubmit] Loading newly created pet...');
+    await petsStore.fetchPet(newPet._id);
+    console.log('[handlePetNameSubmit] Current pet after fetch:', petsStore.currentPet);
+    
+    // Close the modal
+    showNamePetModal.value = false;
+    
+    // Start pet movement
+    console.log('[handlePetNameSubmit] Starting pet movement...');
+    startPetMovement();
+    console.log('[handlePetNameSubmit] Pet creation complete!');
+  } catch (error) {
+    console.error('[handlePetNameSubmit] Error creating pet:', error);
+    // Keep modal open on error so user can try again
+  }
 };
 
 // Reset egg (for testing or to hatch again)

@@ -8,137 +8,173 @@
       <button :class="$style.backButton" @click="goBack">
         ← Back
       </button>
-      <h1 :class="$style.title">Games Arcade</h1>
-      <p :class="$style.subtitle">Choose a game to play with your Tamagotchi!</p>
+      <h1 :class="$style.title">🎮 Memory Game</h1>
+      <p :class="$style.subtitle">Find all the Tamagotchi pairs!</p>
     </div>
     
-    <!-- Current Pet Info -->
-    <div v-if="currentPet" :class="$style.petInfo">
-      <div :class="$style.petAvatar">
-        <img v-if="currentPet.image" :src="currentPet.image" alt="Pet" />
-        <span v-else>🐾</span>
+    <!-- Game Stats -->
+    <div :class="$style.gameStats">
+      <div :class="$style.statBox">
+        <span :class="$style.statLabel">Moves</span>
+        <span :class="$style.statValue">{{ moves }}</span>
       </div>
-      <div :class="$style.petDetails">
-        <h3 :class="$style.petName">{{ currentPet.name }}</h3>
-        <div :class="$style.petStats">
-          <div :class="$style.petStat">
-            <span>⚡</span>
-            <span :class="$style[getStatColorClass(currentPet.energy)]">{{ currentPet.energy }}/100</span>
-          </div>
-          <div :class="$style.petStat">
-            <span>😄</span>
-            <span :class="$style[getStatColorClass(currentPet.fun)]">{{ currentPet.fun }}/100</span>
-          </div>
-          <div :class="$style.petStat">
-            <span>🍎</span>
-            <span :class="$style[getStatColorClass(currentPet.hunger)]">{{ currentPet.hunger }}/100</span>
+      <div :class="$style.statBox">
+        <span :class="$style.statLabel">Pairs Found</span>
+        <span :class="$style.statValue">{{ pairsFound }}/6</span>
+      </div>
+      <button 
+        v-if="gameWon" 
+        :class="$style.playAgainButton" 
+        @click="resetGame"
+      >
+        🎉 Play Again
+      </button>
+      <button 
+        v-else 
+        :class="$style.resetButton" 
+        @click="resetGame"
+      >
+        🔄 Restart
+      </button>
+    </div>
+    
+    <!-- Memory Grid -->
+    <div :class="$style.memoryGrid">
+      <div 
+        v-for="(card, index) in cards" 
+        :key="index"
+        :class="[
+          $style.card,
+          { 
+            [$style.flipped]: card.flipped,
+            [$style.matched]: card.matched,
+            [$style.wrong]: card.wrong
+          }
+        ]"
+        @click="handleCardClick(index)"
+      >
+        <div :class="$style.cardInner">
+          <!-- Front (blue) -->
+          <div :class="$style.cardFront"></div>
+          <!-- Back (Tamagotchi image) -->
+          <div :class="$style.cardBack">
+            <img :src="card.image" :alt="card.name" />
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Loading state -->
-    <div v-if="loading" :class="$style.loading">
-      <div :class="$style.spinner"></div>
-      <p>Loading games...</p>
-    </div>
-    
-    <!-- Error state -->
-    <div v-else-if="error" :class="$style.error">
-      <p>❌ {{ error }}</p>
-      <button :class="$style.retryButton" @click="loadGames">Retry</button>
-    </div>
-    
-    <!-- Games Grid -->
-    <div v-else :class="$style.gamesGrid">
-      <GameCard 
-        v-for="game in games" 
-        :key="game.id" 
-        :game="game"
-        @play="handlePlayGame"
-        @select="handleSelectGame"
-      />
-    </div>
-    
-    <!-- No pet warning -->
-    <div v-if="!currentPet && !loading" :class="$style.noPetWarning">
-      <p>⚠️ You need a Tamagotchi to play games!</p>
-      <button :class="$style.createPetButton" @click="goToCreatePet">
-        Create a Tamagotchi
-      </button>
+    <!-- Win Message -->
+    <div v-if="gameWon" :class="$style.winMessage">
+      <h2>🎉 Congratulations! 🎉</h2>
+      <p>You found all pairs in {{ moves }} moves!</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useGamesStore } from '../store/games';
-import { usePetsStore } from '../store/pets';
-import GameCard from '../components/GameCard.vue';
 
 const router = useRouter();
-const gamesStore = useGamesStore();
-const petsStore = usePetsStore();
 
-const games = computed(() => gamesStore.games);
-const loading = computed(() => gamesStore.loading || petsStore.loading);
-const error = computed(() => gamesStore.error);
-const currentPet = computed(() => petsStore.currentPet || (petsStore.petsList.length > 0 ? petsStore.petsList[0] : null));
+// Les 6 Tamagotchis pour grille 4x3
+const tamagotchis = [
+  { id: 1, name: 'Buisson', image: '/Pets/buisson 1.svg' },
+  { id: 2, name: 'Chat Feu', image: '/Pets/chatFeu 1.svg' },
+  { id: 3, name: 'Goutte', image: '/Pets/goute 1.svg' },
+  { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi 1.svg' },
+  { id: 5, name: 'Raichu', image: '/Pets/raichu 1.svg' },
+  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.svg' }
+];
 
-// Load games and current pet
-const loadGames = async () => {
-  try {
-    await gamesStore.fetchGames();
-  } catch (err) {
-    console.error('Error loading games:', err);
+// État du jeu
+const cards = ref([]);
+const flippedCards = ref([]);
+const moves = ref(0);
+const pairsFound = ref(0);
+const canFlip = ref(true);
+
+const gameWon = computed(() => pairsFound.value === 6);
+
+// Initialiser le jeu
+const initGame = () => {
+  // Créer les paires (2 cartes de chaque Tamagotchi)
+  const pairs = [];
+  tamagotchis.forEach(tama => {
+    pairs.push({ ...tama, flipped: false, matched: false, wrong: false });
+    pairs.push({ ...tama, flipped: false, matched: false, wrong: false });
+  });
+  
+  // Mélanger les cartes (Fisher-Yates shuffle)
+  for (let i = pairs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
   }
+  
+  cards.value = pairs;
+  flippedCards.value = [];
+  moves.value = 0;
+  pairsFound.value = 0;
+  canFlip.value = true;
 };
 
-const loadCurrentPet = async () => {
-  try {
-    if (!petsStore.currentPet && petsStore.petsList.length === 0) {
-      await petsStore.fetchPets({ limit: 1 });
+// Gérer le clic sur une carte
+const handleCardClick = (index) => {
+  const card = cards.value[index];
+  
+  // Ne rien faire si :
+  // - La carte est déjà retournée
+  // - La carte est déjà trouvée
+  // - On ne peut pas retourner (animation en cours)
+  // - Deux cartes sont déjà retournées
+  if (!canFlip.value || card.flipped || card.matched || flippedCards.value.length === 2) {
+    return;
+  }
+  
+  // Retourner la carte
+  card.flipped = true;
+  flippedCards.value.push(index);
+  
+  // Si c'est la deuxième carte retournée
+  if (flippedCards.value.length === 2) {
+    moves.value++;
+    canFlip.value = false;
+    
+    const [firstIndex, secondIndex] = flippedCards.value;
+    const firstCard = cards.value[firstIndex];
+    const secondCard = cards.value[secondIndex];
+    
+    // Vérifier si c'est une paire
+    if (firstCard.id === secondCard.id) {
+      // Paire trouvée !
+      setTimeout(() => {
+        firstCard.matched = true;
+        secondCard.matched = true;
+        pairsFound.value++;
+        flippedCards.value = [];
+        canFlip.value = true;
+      }, 500);
+    } else {
+      // Pas la bonne paire
+      firstCard.wrong = true;
+      secondCard.wrong = true;
+      
+      setTimeout(() => {
+        firstCard.flipped = false;
+        secondCard.flipped = false;
+        firstCard.wrong = false;
+        secondCard.wrong = false;
+        flippedCards.value = [];
+        canFlip.value = true;
+      }, 1000);
     }
-  } catch (err) {
-    console.error('Error loading pet:', err);
   }
 };
 
-// Handle game selection
-const handleSelectGame = (game) => {
-  console.log('Game selected:', game);
-  // Pour l'instant, on ne fait rien de spécial
-  // Plus tard, on pourra afficher des détails du jeu
-};
-
-// Handle play game
-const handlePlayGame = async (game) => {
-  if (!currentPet.value) {
-    alert('You need a Tamagotchi to play!');
-    return;
-  }
-  
-  // Vérifier si le pet a assez d'énergie
-  if (currentPet.value.energy < game.energyCost) {
-    alert(`Not enough energy! Your Tamagotchi needs at least ${game.energyCost} energy to play this game.`);
-    return;
-  }
-  
-  try {
-    console.log('Playing game:', game.name, 'with pet:', currentPet.value.name);
-    
-    // Jouer au jeu (pour l'instant avec un score aléatoire)
-    const randomScore = Math.floor(Math.random() * 100);
-    await gamesStore.playGame(currentPet.value._id, game.id, randomScore);
-    
-    // Recharger les stats du pet
-    await petsStore.fetchPet(currentPet.value._id);
-    
-    alert(`🎉 Great! Your Tamagotchi had fun playing ${game.name}!\nScore: ${randomScore}`);
-  } catch (err) {
-    console.error('Error playing game:', err);
-  }
+// Réinitialiser le jeu
+const resetGame = () => {
+  initGame();
 };
 
 // Navigation
@@ -146,20 +182,8 @@ const goBack = () => {
   router.push('/tamago');
 };
 
-const goToCreatePet = () => {
-  router.push('/tamagotchi');
-};
-
-// Get stat color class based on value
-const getStatColorClass = (value) => {
-  if (value >= 75) return 'statGood';
-  if (value >= 35) return 'statMedium';
-  return 'statLow';
-};
-
 onMounted(() => {
-  loadGames();
-  loadCurrentPet();
+  initGame();
 });
 </script>
 
@@ -188,7 +212,7 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .backButton {
@@ -225,186 +249,194 @@ onMounted(() => {
   margin: 8px 0 0;
 }
 
-.petInfo {
+.gameStats {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-  border-radius: 16px;
-  border: 3px solid #000;
-  margin-bottom: 30px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.petAvatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: #6bcf7f;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 48px;
-  border: 3px solid #000;
-  overflow: hidden;
-}
-
-.petAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.petDetails {
-  flex: 1;
-}
-
-.petName {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 8px;
-  color: #000;
-}
-
-.petStats {
-  display: flex;
-  gap: 16px;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
   flex-wrap: wrap;
 }
 
-.petStat {
+.statBox {
+  background-color: #fff;
+  border: 3px solid #000;
+  border-radius: 12px;
+  padding: 12px 24px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 4px;
+}
+
+.statLabel {
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+}
+
+.resetButton,
+.playAgainButton {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #6bcf7f 0%, #5ab36b 100%);
+  border: 3px solid #000;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Pixelify Sans', sans-serif;
+  color: #fff;
 }
 
-.petStat span:first-child {
-  font-size: 20px;
+.playAgainButton {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+  animation: pulse 2s infinite;
 }
 
-.statGood {
-  color: #6bcf7f;
-}
-
-.statMedium {
-  color: #ffd93d;
-}
-
-.statLow {
-  color: #ff6b6b;
-}
-
-.loading {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 6px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #6bcf7f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
   }
 }
 
-.error {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 40px 20px;
-  background-color: rgba(255, 107, 107, 0.2);
-  border-radius: 16px;
-  border: 3px solid #ff6b6b;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.error p {
-  font-size: 18px;
-  font-weight: 700;
-  color: #000;
-  margin: 0 0 16px;
-}
-
-.retryButton {
-  padding: 12px 32px;
-  background-color: #6bcf7f;
-  border: 3px solid #000;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Pixelify Sans', sans-serif;
-}
-
-.retryButton:hover {
-  background-color: #5ab86e;
+.resetButton:hover,
+.playAgainButton:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
-.gamesGrid {
+.memoryGrid {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
-  padding: 20px 0;
-  max-width: 1200px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  max-width: 600px;
   margin: 0 auto;
+  padding: 20px;
 }
 
-.noPetWarning {
+.card {
+  aspect-ratio: 1;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card:hover .cardInner {
+  transform: scale(1.05);
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.card.flipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+.card.matched .cardInner {
+  opacity: 0.6;
+}
+
+.card.wrong .cardInner {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: rotateY(180deg) translateX(0);
+  }
+  25% {
+    transform: rotateY(180deg) translateX(-10px);
+  }
+  75% {
+    transform: rotateY(180deg) translateX(10px);
+  }
+}
+
+.cardFront,
+.cardBack {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  border: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardFront {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.cardBack {
+  background-color: #fff;
+  transform: rotateY(180deg);
+  padding: 10px;
+}
+
+.cardBack img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.winMessage {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 40px 20px;
-  background-color: rgba(255, 217, 61, 0.3);
+  padding: 30px;
+  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+  border: 4px solid #000;
   border-radius: 16px;
-  border: 3px solid #ffd93d;
   max-width: 500px;
-  margin: 40px auto;
+  margin: 30px auto 0;
+  animation: bounceIn 0.6s;
 }
 
-.noPetWarning p {
-  font-size: 18px;
-  font-weight: 700;
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.winMessage h2 {
+  font-size: 32px;
+  margin: 0 0 12px;
   color: #000;
-  margin: 0 0 16px;
 }
 
-.createPetButton {
-  padding: 12px 32px;
-  background-color: #6bcf7f;
-  border: 3px solid #000;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Pixelify Sans', sans-serif;
-}
-
-.createPetButton:hover {
-  background-color: #5ab86e;
-  transform: translateY(-2px);
+.winMessage p {
+  font-size: 20px;
+  margin: 0;
+  color: #333;
 }
 
 @media (max-width: 768px) {
@@ -416,14 +448,34 @@ onMounted(() => {
     font-size: 14px;
   }
   
-  .gamesGrid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .memoryGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 10px;
   }
   
-  .petInfo {
-    flex-direction: column;
-    text-align: center;
+  .gameStats {
+    gap: 12px;
+  }
+  
+  .statBox {
+    padding: 8px 16px;
+  }
+  
+  .statValue {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .memoryGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  
+  .cardFront,
+  .cardBack {
+    border-width: 2px;
   }
 }
 </style>

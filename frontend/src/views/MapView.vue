@@ -18,6 +18,9 @@
     </div>
 
     <div class="header">
+      <button class="btn-back" @click="goBack">
+        <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" class="back-icon" />
+      </button>
       <h1>👥 Users Nearby</h1>
       <div v-if="currentLocation" class="location-badge">
         📍 {{ currentLocation.latitude.toFixed(4) }}, {{ currentLocation.longitude.toFixed(4) }}
@@ -77,9 +80,6 @@
       </div>
     </div>
 
-    <div class="map-footer">
-      <button @click="goBack" class="btn-back">← Back to Tamago</button>
-    </div>
   </div>
 </template>
 
@@ -187,6 +187,43 @@ onUnmounted(() => {
   text-align: center;
   font-family: 'Pixelify Sans', monospace;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-back {
+  position: absolute;
+  left: 1.5rem;
+  top: 1.5rem;
+  padding: 0.5rem;
+  background: #ffffff;
+  color: #000000;
+  border: 4px solid #000000;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.btn-back:hover {
+  transform: scale(1.05);
+}
+
+.btn-back:active {
+  transform: scale(0.98);
+}
+
+.back-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .header h1 {
@@ -321,32 +358,7 @@ onUnmounted(() => {
   margin-top: 1rem;
 }
 
-.map-footer {
-  padding: 1.5rem;
-  border-top: 2px solid #ddd;
-  background: #fff;
-  display: flex;
-  justify-content: center;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-}
 
-.btn-back {
-  padding: 0.75rem 1.5rem;
-  background: #627DE0;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Pixelify Sans', monospace;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-back:hover {
-  background: #5169c7;
-  transform: translateY(-2px);
-}
 
 .permission-modal-overlay {
   position: fixed;
@@ -510,13 +522,9 @@ onUnmounted(() => {
     padding: 0.75rem 1rem;
   }
 
-  .map-footer {
-    padding: 1rem;
-  }
-
   .btn-back {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.85rem;
+    left: 1rem;
+    top: 1.2rem;
   }
 }
 </style>

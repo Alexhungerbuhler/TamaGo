@@ -27,14 +27,14 @@
         :class="$style.playAgainButton" 
         @click="resetGame"
       >
-        🎉 Play Again
+        Play Again
       </button>
       <button 
         v-else 
         :class="$style.resetButton" 
         @click="resetGame"
       >
-        🔄 Restart
+        Restart
       </button>
     </div>
     
@@ -66,7 +66,7 @@
     
     <!-- Win Message -->
     <div v-if="gameWon" :class="$style.winMessage">
-      <h2>🎉 Congratulations! 🎉</h2>
+      <h2>Congratulations!</h2>
       <p>You found all pairs in {{ moves }} moves!</p>
     </div>
   </div>

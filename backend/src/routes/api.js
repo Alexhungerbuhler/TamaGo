@@ -15,7 +15,7 @@ import {
   updatePet,
 } from "../api/pets.js";
 import { getGame, listGames, playGame } from "../api/games.js";
-import { getGlobalStats, getUserStats } from "../api/stats.js";
+import { getGlobalStats, getUserStats, getPetStats as getPetStatsAPI, incrementPoopsCount, incrementGamesCount } from "../api/stats.js";
 import { manualTick } from "../api/tick.js";
 import {
   uploadAvatar,
@@ -71,6 +71,9 @@ router.get("/world/map", getWorldMap);
 // Statistics (aggregation endpoints)
 router.get("/stats", getGlobalStats);                          // GET /api/stats (global statistics)
 router.get("/stats/users/:userId", authenticate, getUserStats); // GET /api/stats/users/:userId (user statistics)
+router.get("/stats/pets/:petId", getPetStatsAPI);              // GET /api/stats/pets/:petId (pet statistics)
+router.post("/stats/pets/:petId/poops", authenticate, incrementPoopsCount); // POST /api/stats/pets/:petId/poops (increment poops count)
+router.post("/stats/pets/:petId/games", authenticate, incrementGamesCount); // POST /api/stats/pets/:petId/games (increment games count)
 
 // Tick system (manual trigger)
 router.post("/tick", manualTick);

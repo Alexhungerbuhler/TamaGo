@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { petsService } from '../services/api';
+import { petsService, statsService } from '../services/api';
 import wsService from '../services/websocket';
 import { useNotificationsStore } from './notifications';
 
@@ -311,10 +311,36 @@ export const usePetsStore = defineStore('pets', () => {
    */
   async function fetchPetStats(id) {
     try {
-      const response = await petsService.getStats(id);
+      const response = await statsService.getPetStats(id);
       return response.data;
     } catch (err) {
       error.value = err.message || 'Erreur lors du chargement des stats';
+      throw err;
+    }
+  }
+
+  /**
+   * Incrémenter le compteur de poops
+   */
+  async function incrementPoops(id) {
+    try {
+      const response = await statsService.incrementPoops(id);
+      return response.data;
+    } catch (err) {
+      console.error('Erreur lors de l\'incrémentation des poops:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Incrémenter le compteur de jeux
+   */
+  async function incrementGames(id) {
+    try {
+      const response = await statsService.incrementGames(id);
+      return response.data;
+    } catch (err) {
+      console.error('Erreur lors de l\'incrémentation des jeux:', err);
       throw err;
     }
   }
@@ -403,6 +429,8 @@ export const usePetsStore = defineStore('pets', () => {
     playWithPet,
     movePet,
     fetchPetStats,
+    incrementPoops,
+    incrementGames,
     uploadPetImage,
     deletePetImage,
     setPage,

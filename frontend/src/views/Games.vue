@@ -207,7 +207,10 @@ watch(gameWon, async (newVal) => {
       await petsStore.updatePet(petId, { fun: newFun, energy: newEnergy });
       await petsStore.fetchPet(petId);
       
-      console.log('🎉 Victory! Fun increased: +25, Energy consumed: -25');
+      // Incrémenter le compteur de jeux
+      await petsStore.incrementGames(petId);
+      
+      console.log('🎉 Victory! Fun increased: +25, Energy consumed: -25, Games counter incremented');
     } catch (error) {
       console.error('❌ Error updating fun:', error);
     }

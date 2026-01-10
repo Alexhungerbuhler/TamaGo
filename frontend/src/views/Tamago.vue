@@ -94,7 +94,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { usePetsStore } from '../store/pets';
 import { useAuthStore } from '../store/index';
 import NamePetModal from '../components/NamePetModal.vue';
@@ -136,6 +136,19 @@ const nbPoops = computed(() => {
   if (hygiene > 25) return 2;      // Orange (50-26%)
   if (hygiene > 0) return 3;       // Rouge (25-1%)
   return 4;                        // Critique (0%)
+});
+
+// Watcher pour détecter l'apparition d'un poop et incrémenter le compteur
+watch(nbPoops, async (newCount, oldCount) => {
+  // Incrémenter seulement si le nombre de poops augmente (pas quand ils diminuent)
+  if (newCount > oldCount && currentPet.value?._id) {
+    try {
+      await petsStore.incrementPoops(currentPet.value._id);
+      console.log('💩 Poop counter incremented! Total:', newCount);
+    } catch (error) {
+      console.error('Error incrementing poop counter:', error);
+    }
+  }
 });
 
 const poopsPositions = computed(() => {

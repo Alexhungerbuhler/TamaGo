@@ -209,6 +209,30 @@ export const statsService = {
    */
   getUserStats(userId) {
     return apiClient.get(`/stats/users/${userId}`);
+  },
+
+  /**
+   * Récupérer les statistiques d'un pet
+   * @param {string} petId - ID du pet
+   */
+  getPetStats(petId) {
+    return apiClient.get(`/stats/pets/${petId}`);
+  },
+
+  /**
+   * Incrémenter le compteur de poops d'un pet
+   * @param {string} petId - ID du pet
+   */
+  incrementPoops(petId) {
+    return apiClient.post(`/stats/pets/${petId}/poops`);
+  },
+
+  /**
+   * Incrémenter le compteur de jeux d'un pet
+   * @param {string} petId - ID du pet
+   */
+  incrementGames(petId) {
+    return apiClient.post(`/stats/pets/${petId}/games`);
   }
 };
 

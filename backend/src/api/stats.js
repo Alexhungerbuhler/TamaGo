@@ -145,6 +145,76 @@ export async function getGlobalStats(req, res, next) {
 }
 
 /**
+ * Statistiques d'un pet spécifique
+ */
+export async function getPetStats(req, res, next) {
+  try {
+    const { petId } = req.params;
+    
+    const pet = await Tamagotchi.findById(petId).exec();
+    if (!pet) {
+      return res.status(404).json({ message: "Pet not found" });
+    }
+    
+    res.json({
+      petId: pet._id,
+      poopsCount: pet.poopsCount || 0,
+      gamesCount: pet.gamesCount || 0
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Incrémenter le compteur de poops d'un pet
+ */
+export async function incrementPoopsCount(req, res, next) {
+  try {
+    const { petId } = req.params;
+    
+    const pet = await Tamagotchi.findById(petId).exec();
+    if (!pet) {
+      return res.status(404).json({ message: "Pet not found" });
+    }
+    
+    pet.poopsCount = (pet.poopsCount || 0) + 1;
+    await pet.save();
+    
+    res.json({
+      petId: pet._id,
+      poopsCount: pet.poopsCount
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Incrémenter le compteur de jeux d'un pet
+ */
+export async function incrementGamesCount(req, res, next) {
+  try {
+    const { petId } = req.params;
+    
+    const pet = await Tamagotchi.findById(petId).exec();
+    if (!pet) {
+      return res.status(404).json({ message: "Pet not found" });
+    }
+    
+    pet.gamesCount = (pet.gamesCount || 0) + 1;
+    await pet.save();
+    
+    res.json({
+      petId: pet._id,
+      gamesCount: pet.gamesCount
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * Statistiques personnelles d'un utilisateur
  */
 export async function getUserStats(req, res, next) {

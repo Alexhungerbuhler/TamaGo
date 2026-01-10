@@ -85,12 +85,12 @@ const currentPet = computed(() => petsStore.currentPet || (petsStore.petsList.le
 
 // Les 6 Tamagotchis pour grille 4x3
 const tamagotchis = [
-  { id: 1, name: 'Buisson', image: '/Pets/buisson 1.svg' },
-  { id: 2, name: 'Chat Feu', image: '/Pets/chatFeu 1.svg' },
-  { id: 3, name: 'Goutte', image: '/Pets/goute 1.svg' },
-  { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi 1.svg' },
-  { id: 5, name: 'Raichu', image: '/Pets/raichu 1.svg' },
-  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.svg' }
+  { id: 1, name: 'Buisson', image: '/Pets/buisson 1.png' },
+  { id: 2, name: 'Chat Feu', image: '/Pets/chatFeu 1.png' },
+  { id: 3, name: 'Goutte', image: '/Pets/goute 1.png' },
+  { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi 1.png' },
+  { id: 5, name: 'Raichu', image: '/Pets/raichu 1.png' },
+  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.png' }
 ];
 
 // État du jeu

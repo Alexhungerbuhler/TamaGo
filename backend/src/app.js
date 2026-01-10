@@ -8,7 +8,6 @@ import cors from 'cors';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import swaggerUi from 'swagger-ui-express';
-import { Server } from 'socket.io';
 
 import apiRouter from './routes/api.js';
 
@@ -24,11 +23,13 @@ mongoose.connect(process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/tamago')
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = new Server(httpServer, { /* options */ });
 
-// CORS (optionnel si front et back même domaine sur Render)
+// CORS configuration for frontend
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+console.log('🔧 CORS Origin configured for:', corsOrigin);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || true,
+  origin: corsOrigin,
   credentials: true
 }));
 

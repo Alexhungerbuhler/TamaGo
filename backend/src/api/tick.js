@@ -10,6 +10,11 @@ export async function executeTick() {
     let updatedCount = 0;
 
     for (const pet of pets) {
+      // Skip pets without a name (they haven't been properly initialized)
+      if (!pet.name || pet.name.trim() === '') {
+        continue;
+      }
+
       const oldStats = {
         hunger: pet.hunger,
         hygiene: pet.hygiene,

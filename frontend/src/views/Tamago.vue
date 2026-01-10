@@ -100,6 +100,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { usePetsStore } from '../store/pets';
 import { useAuthStore } from '../store/index';
 import NamePetModal from '../components/NamePetModal.vue';
+import wsService from '../services/websocket';
 
 const router = useRouter();
 const petsStore = usePetsStore();
@@ -631,6 +632,14 @@ const handleUse = async () => {
 onMounted(async () => {
   try {
     console.log('=== Tamago onMounted ===');
+    
+    // Initialize WebSocket connection
+    const token = localStorage.getItem('tamago_auth_token');
+    if (token && !wsService.connected) {
+      console.log('🔌 Initializing WebSocket connection...');
+      wsService.connect(token);
+    }
+    
     console.log('AuthStore state:', {
       isAuthenticated: authStore.isAuthenticated,
       user: authStore.user,

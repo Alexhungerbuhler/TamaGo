@@ -28,10 +28,11 @@
     <div v-if="showDeleteModal" class="modal-overlay" @click.self="showDeleteModal = false">
       <div class="modal-container">
         <div class="modal-content">
-          <h2 class="modal-title">⚠️ Delete Current Pet?</h2>
-          
+        <h2 class="modal-title">
+          <img src="/icons/TriangleWarningIcon.svg" class="title-warning-icon" alt="warning">
+          Delete Current Pet?
+        </h2>
           <p class="modal-warning">
-            <img src="/icons/WarningIcon.svg" class="warning-icon" alt="warning">
             Starting a new game will permanently delete your current Tamagotchi!
           </p>
 
@@ -286,6 +287,17 @@ async function logout() {
   color: #000000;
   margin: 0 0 1.5rem;
   line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.title-warning-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .modal-warning {
@@ -293,10 +305,6 @@ async function logout() {
   font-size: 1rem;
   color: #D5230C;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
   text-align: center;
   line-height: 1.5;
 }

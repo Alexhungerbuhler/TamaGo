@@ -1,11 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../store';
-import Home from '../views/Home.vue';
 import Login from '../views/Login.vue';
 import Dashboard from '../views/Dashboard.vue';
 import Tamago from '../views/Tamago.vue';
-import TamagotchiList from '../views/TamagotchiList.vue';
-import TamagotchiDetail from '../views/TamagotchiDetail.vue';
 import TamagotchiView from '../views/TamagotchiView.vue';
 import Profile from '../views/Profile.vue';
 import Register from '../views/Register.vue';
@@ -15,13 +12,11 @@ import Games from '../views/Games.vue';
 import ApiTestPanel from '../components/ApiTestPanel.vue';
 
 const routes = [
-  { path: '/', name: 'Home', component: Home },
+  { path: '/', redirect: '/login' },
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },
   { path: '/dashboard', name: 'Dashboard', component: Dashboard, meta: { requiresAuth: true } },
   { path: '/tamago', name: 'Tamago', component: Tamago, meta: { requiresAuth: true } },
-  { path: '/tamagotchis', name: 'TamagotchiList', component: TamagotchiList },
-  { path: '/tamagotchis/:id', name: 'TamagotchiDetail', component: TamagotchiDetail },
   { path: '/tamagotchi/:id?', name: 'TamagotchiView', component: TamagotchiView, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/map', name: 'MapView', component: MapView, meta: { requiresAuth: true } },
@@ -50,8 +45,8 @@ router.beforeEach((to, from, next) => {
 
   // Route réservée aux invités (login/register) mais déjà connecté
   if (to.meta.requiresGuest && isAuthenticated) {
-    // Redirection vers home
-    return next({ name: 'Home' });
+    // Redirection vers dashboard
+    return next({ name: 'Dashboard' });
   }
 
   // Autoriser la navigation

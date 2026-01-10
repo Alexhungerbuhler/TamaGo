@@ -117,9 +117,8 @@ async function handleSubmit() {
     // Émettre l'événement pour informer le parent
     emit('pet-created', newPet);
 
-    // Rediriger vers la page de détail du Tamagotchi
-    const petId = newPet._id || newPet.id;
-    router.push(`/tamagotchis/${petId}`);
+    // Rediriger vers la page /tamago pour voir tous les tamagotchis
+    router.push('/tamago');
   } catch (err) {
     serverError.value = err.message || 'Erreur lors de la création de votre Tamagotchi';
     console.error('Erreur création pet:', err);

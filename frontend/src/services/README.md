@@ -57,10 +57,6 @@ await petsService.move(petId, { latitude: 48.8566, longitude: 2.3522 });
 
 // Statistiques
 const { data: stats } = await petsService.getStats(petId);
-
-// Images
-await petsService.uploadImage(petId, fileObject);
-await petsService.deleteImage(petId);
 ```
 
 #### 3. `statsService` - Statistiques
@@ -81,16 +77,7 @@ import { worldService } from '@/services/api';
 const { data: map } = await worldService.getMap();
 ```
 
-#### 5. `usersService` - Profil utilisateur
-```javascript
-import { usersService } from '@/services/api';
-
-// Avatar
-await usersService.uploadAvatar(fileObject);
-await usersService.deleteAvatar();
-```
-
-#### 6. `tickService` - Système de tick
+#### 5. `tickService` - Système de tick
 ```javascript
 import { tickService } from '@/services/api';
 

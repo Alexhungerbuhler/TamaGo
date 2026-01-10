@@ -24,11 +24,11 @@ export function useAuthRedirect() {
   }
 
   /**
-   * Redirige vers home si déjà authentifié
+   * Redirige vers dashboard si déjà authentifié
    */
   function requireGuest() {
     if (authStore.isAuthenticated) {
-      router.push({ name: 'Home' });
+      router.push({ name: 'Dashboard' });
       return false;
     }
     return true;

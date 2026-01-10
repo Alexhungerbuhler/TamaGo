@@ -17,15 +17,8 @@ import {
 import { getGame, listGames, playGame } from "../api/games.js";
 import { getGlobalStats, getUserStats, getPetStats as getPetStatsAPI, incrementPoopsCount, incrementGamesCount } from "../api/stats.js";
 import { manualTick } from "../api/tick.js";
-import {
-  uploadAvatar,
-  deleteAvatar,
-  uploadPetImage,
-  deletePetImage,
-} from "../api/uploads.js";
 import { getWorldMap } from "../api/world.js";
 import { authenticate, optionalAuthenticate } from "../utils/jwt.js";
-import { upload } from "../utils/uploader.js";
 
 const router = express.Router();
 
@@ -36,10 +29,6 @@ router.get("/", (_req, res) => res.send("API OK"));
 router.post("/auth/register", register);
 router.post("/auth/login", login);
 router.post("/auth/logout", logout);
-
-// Users (uploads)
-router.post("/users/avatar", authenticate, upload.single("avatar"), uploadAvatar);
-router.delete("/users/avatar", authenticate, deleteAvatar);
 
 // Pets (core resource)
 router.get("/pets", optionalAuthenticate, listPets);           // GET /api/pets?userId=&page=&limit=
@@ -55,10 +44,6 @@ router.post("/pets/:id/sleep", authenticate, sleepPet);
 router.post("/pets/:id/play", authenticate, playPet);
 router.post("/pets/:id/move", authenticate, movePet);
 router.get("/pets/:id/stats", getPetStats);
-
-// Pet uploads (images)
-router.post("/pets/:id/image", authenticate, upload.single("image"), uploadPetImage);
-router.delete("/pets/:id/image", authenticate, deletePetImage);
 
 // Games
 router.get("/games", listGames);                               // GET /api/games (list all games)

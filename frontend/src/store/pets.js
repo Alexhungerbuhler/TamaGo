@@ -346,34 +346,6 @@ export const usePetsStore = defineStore('pets', () => {
   }
 
   /**
-   * Upload d'une image pour un pet
-   */
-  async function uploadPetImage(id, file) {
-    try {
-      const response = await petsService.uploadImage(id, file);
-      await updatePetInList(id, response.data);
-      return response.data;
-    } catch (err) {
-      error.value = err.message || 'Erreur lors de l\'upload de l\'image';
-      throw err;
-    }
-  }
-
-  /**
-   * Supprimer l'image d'un pet
-   */
-  async function deletePetImage(id) {
-    try {
-      const response = await petsService.deleteImage(id);
-      await updatePetInList(id, response.data);
-      return response.data;
-    } catch (err) {
-      error.value = err.message || 'Erreur lors de la suppression de l\'image';
-      throw err;
-    }
-  }
-
-  /**
    * Mettre à jour un pet dans la liste et dans currentPet
    */
   function updatePetInList(id, updatedPet) {
@@ -431,8 +403,6 @@ export const usePetsStore = defineStore('pets', () => {
     fetchPetStats,
     incrementPoops,
     incrementGames,
-    uploadPetImage,
-    deletePetImage,
     setPage,
     clearError,
     

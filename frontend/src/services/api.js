@@ -166,29 +166,6 @@ export const petsService = {
    */
   getStats(id) {
     return apiClient.get(`/pets/${id}/stats`);
-  },
-
-  /**
-   * Upload d'une image pour un pet
-   * @param {string} id - ID du pet
-   * @param {File} imageFile - Fichier image
-   */
-  uploadImage(id, imageFile) {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    
-    return apiClient.post(`/pets/${id}/image`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-
-  /**
-   * Supprimer l'image d'un pet
-   */
-  deleteImage(id) {
-    return apiClient.delete(`/pets/${id}/image`);
   }
 };
 
@@ -275,33 +252,6 @@ export const gamesService = {
    */
   playGame(petId, gameId, score = 0) {
     return apiClient.post(`/pets/${petId}/play-game`, { gameId, score });
-  }
-};
-
-// ============================================
-// Services Users (uploads avatar)
-// ============================================
-export const usersService = {
-  /**
-   * Upload d'un avatar utilisateur
-   * @param {File} avatarFile - Fichier image
-   */
-  uploadAvatar(avatarFile) {
-    const formData = new FormData();
-    formData.append('avatar', avatarFile);
-    
-    return apiClient.post('/users/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-
-  /**
-   * Supprimer l'avatar utilisateur
-   */
-  deleteAvatar() {
-    return apiClient.delete('/users/avatar');
   }
 };
 

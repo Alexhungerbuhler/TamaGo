@@ -44,14 +44,14 @@
     </div>
     
     <!-- Main content icons (can be replaced with actual images) -->
-    <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">
+    <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translate(calc(-50% + ${petPositionX}px), calc(-50% + ${petPositionY}px))` }">
       <img v-if="!isHatched" src="/Eggs/egg.svg" alt="Egg" title="Egg" :class="{ [$style.shake]: isShaking }" />
       <!-- Show animation frame if animating, otherwise show normal pet image -->
       <img v-else :src="currentAnimationFrame || hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
     </div>
 
     <!-- Pet name - shown above hatched pet -->
-    <b :class="$style.petName" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
+    <b :class="$style.petName" :style="{ transform: `translate(calc(-50% + ${petPositionX}px), calc(-50% + ${petPositionY}px))` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Crottes / Poops - displayed based on hygiene level -->
     <img
@@ -207,12 +207,16 @@ const poopsPositions = computed(() => {
   const seed = Math.floor(hygiene / 25); // 0-4 basé sur l'hygiène
   
   for (let i = 0; i < count; i++) {
-    // Positions pseudo-aléatoires mais cohérentes
+    // Positions pseudo-aléatoires mais cohérentes autour du pet
     const angle = (seed * 1000 + i * 137.5) % 360; // Angle en degrés
-    const radius = 50 + (i * 30) + ((seed * 17 + i * 23) % 50);
+    const radius = 40 + (i * 25) + ((seed * 17 + i * 23) % 40);
     
-    const x = 180 + Math.cos(angle * Math.PI / 180) * radius;
-    const y = 350 + Math.sin(angle * Math.PI / 180) * radius;
+    // Centrer autour de la position du pet (62% de l'écran)
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight * 0.62;
+    
+    const x = centerX + Math.cos(angle * Math.PI / 180) * radius - 20; // -20 pour centrer l'icone
+    const y = centerY + Math.sin(angle * Math.PI / 180) * radius - 20;
     
     positions.push({ x, y });
   }
@@ -228,10 +232,11 @@ const startPetMovement = () => {
   
   petMovementInterval.value = setInterval(() => {
     if (isHatched.value) {
-      // Generate small random movement between -60 and 60 pixels (smaller steps)
-      const randomMovement = Math.random() * 80 - 60; // -20 to 80
-      petPositionY.value = randomMovement;
-      petPositionX.value = randomMovement;
+      // Generate small random movement between -40 and 40 pixels (stay in bottom area)
+      const randomMovementX = Math.random() * 80 - 40; // -40 to 40
+      const randomMovementY = Math.random() * 40 - 20; // -20 to 20 (smaller vertical movement)
+      petPositionY.value = randomMovementY;
+      petPositionX.value = randomMovementX;
     }
   }, 3000); // Change position every 3 seconds (slower)
 };
@@ -321,6 +326,7 @@ const hatchEgg = async () => {
       if (savedImage) {
         hatchedPetImage.value = savedImage;
       } else {
+        hatchedPetImage.value = getRandomPet();
         saveHatchedPet(existingPet._id);
       }
       
@@ -794,31 +800,38 @@ const requestMotionPermission = async () => {
 <style module>
 .ecranDarrive {
   width: 100%;
-  height: 852px;
-  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  position: fixed;
+  top: 0;
+  left: 0;
   background-color: #c0fe90;
   overflow: hidden;
   text-align: left;
   font-size: 14px;
   color: #000;
   font-family: 'Pixelify Sans';
+  touch-action: none; /* Prevent pull-to-refresh and other gestures */
 }
 
 .b4de0fe89384581A3938a7a175Icon {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   flex-shrink: 0;
   z-index: 0;
+  pointer-events: none;
 }
 
 .topIcon {
   position: absolute;
-  width: 32px;
-  height: 32px;
+  width: clamp(32px, 8vw, 40px);
+  height: clamp(32px, 8vw, 40px);
   flex-shrink: 0;
   object-fit: contain;
   z-index: 2;
@@ -829,8 +842,8 @@ const requestMotionPermission = async () => {
 
 .gaugeIcon {
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: clamp(60px, 15vw, 75px);
+  height: clamp(60px, 15vw, 75px);
   flex-shrink: 0;
   object-fit: fill;
   z-index: 1;
@@ -884,19 +897,23 @@ const requestMotionPermission = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: clamp(48px, 12vw, 60px);
+  height: clamp(48px, 12vw, 60px);
 }
 
 .topStatsContainer {
   position: absolute;
-  top: 70px;
-  left: calc(50% - 170px);
+  top: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 50px;
+  gap: clamp(35px, 12vw, 65px);
   flex-shrink: 0;
+  z-index: 10;
+  width: 90%;
+  max-width: 400px;
 }
 
 .topStatItem {
@@ -908,7 +925,7 @@ const requestMotionPermission = async () => {
 }
 
 .topLabel {
-  font-size: 12px;
+  font-size: clamp(10px, 2.5vw, 12px);
   font-weight: 700;
   text-align: center;
   color: #000;
@@ -1039,13 +1056,17 @@ const requestMotionPermission = async () => {
 
 .groupParent {
   position: absolute;
-  top: 700px;
-  left: calc(50% - 160px);
+  bottom: 20vh;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 60px;
+  gap: clamp(45px, 15vw, 75px);
   flex-shrink: 0;
+  z-index: 10;
+  width: 90%;
+  max-width: 400px;
 }
 
 .navItem {
@@ -1057,14 +1078,14 @@ const requestMotionPermission = async () => {
 }
 
 .navIcon {
-  height: 32px;
-  width: 32px;
+  height: clamp(32px, 8vw, 40px);
+  width: clamp(32px, 8vw, 40px);
   position: relative;
   object-fit: contain;
 }
 
 .navLabel {
-  font-size: 12px;
+  font-size: clamp(10px, 2.5vw, 12px);
   font-weight: 700;
   text-align: center;
   white-space: nowrap;
@@ -1141,30 +1162,29 @@ const requestMotionPermission = async () => {
 
 .eggPlaceholder {
   position: absolute;
-  top: 410px;
-  left: calc(50% - 99.5px);
-  width: 199px;
-  height: 200px;
+  top: 55%;
+  left: 50%;
+  width: clamp(280px, 70vw, 400px);
+  height: clamp(280px, 70vw, 400px);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 120px;
   flex-shrink: 0;
-  transition: transform 0.5s ease-in-out;
+  z-index: 5;
 }
 
 .petName {
   position: absolute;
-  top: 355px;
-  left: calc(50% - 50px);
-  font-size: 24px;
+  top: calc(50% - 12vh);
+  left: 50%;
+  font-size: clamp(18px, 5vw, 24px);
   font-weight: 700;
   text-align: center;
   color: #000;
   white-space: nowrap;
   flex-shrink: 0;
-  z-index: 1;
-  transition: transform 0.5s ease-in-out;
+  z-index: 6;
 }
 
 .energyPlaceholder {
@@ -1183,15 +1203,18 @@ const requestMotionPermission = async () => {
 
 .shakeYourPhone {
   position: absolute;
-  top: 180px;
-  left: calc(50% - 89.5px);
-  font-size: 20px;
+  top: 20vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(16px, 4vw, 20px);
   flex-shrink: 0;
-  z-index: 1;
+  z-index: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  width: 90%;
+  text-align: center;
 }
 
 .permissionButton {
@@ -1315,31 +1338,37 @@ const requestMotionPermission = async () => {
 
 .arrowLeft {
   position: absolute;
-  top: 760px;
-  left: 10px;
-  width: 120px;
-  height: 120px;
+  bottom: 6vh;
+  left: 50%;
+  transform: translateX(calc(-100% - 80px));
+  width: clamp(100px, 26vw, 140px);
+  height: clamp(100px, 26vw, 140px);
   object-fit: contain;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.2s;
+  z-index: 10;
+  touch-action: manipulation;
 }
 
 .arrowRight {
   position: absolute;
-  top: 760px;
-  right: 10px;
-  width: 120px;
-  height: 120px;
+  bottom: 6vh;
+  right: 50%;
+  transform: translateX(calc(100% + 80px));
+  width: clamp(100px, 26vw, 140px);
+  height: clamp(100px, 26vw, 140px);
   object-fit: contain;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.2s;
+  z-index: 10;
+  touch-action: manipulation;
 }
 
 /* Poop styling */
 .poop {
-  position: absolute;
+  position: fixed;
   width: 40px;
   height: 40px;
   z-index: 5;
@@ -1366,13 +1395,16 @@ const requestMotionPermission = async () => {
 
 .pixilFrame01Parent {
   position: absolute;
-  top: calc(50% + 294px);
-  left: calc(50% - 93.73px);
-  width: 193px;
-  height: 193px;
+  bottom: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(110px, 28vw, 150px);
+  height: clamp(110px, 28vw, 150px);
   flex-shrink: 0;
-  font-size: 24px;
+  font-size: clamp(18px, 5vw, 24px);
   cursor: pointer;
+  z-index: 10;
+  touch-action: manipulation;
 }
 
 .pixilFrame01Icon {
@@ -1418,9 +1450,11 @@ const requestMotionPermission = async () => {
 }
 
 .hatchedPet {
-  width: 350px !important;
-  height: 350px !important;
-  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: clamp(330px, 75vw, 500px) !important;
+  max-height: clamp(330px, 75vw, 500px) !important;
+  object-fit: contain !important;
   animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 

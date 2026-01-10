@@ -33,6 +33,16 @@
             <span>🎉 +25</span>
           </div>
         </div>
+        
+        <div :class="$style.gameCard" @click="selectGame('simon')">
+          <div :class="$style.gameIcon">🧠</div>
+          <h2 :class="$style.gameCardTitle">Simon Says</h2>
+          <p :class="$style.gameCardDesc">Repeat the sequence</p>
+          <div :class="$style.gameCardCost">
+            <span>⚡ 25</span>
+            <span>🎉 +25</span>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -206,6 +216,84 @@
       <div v-if="catchWon" :class="$style.winMessage">
         <h2>Victory!</h2>
         <p>You caught {{ catchScore }} Tamagotchis!</p>
+        <button :class="$style.playAgainButton" @click="backToMenu">
+          Back to Menu
+        </button>
+      </div>
+    </div>
+    
+    <!-- Simon Says Game -->
+    <div v-if="selectedGame === 'simon'" :class="$style.gameContainer">
+      <div :class="$style.header">
+        <button :class="$style.backButton" @click="backToMenu">
+          <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
+        </button>
+        <h1 :class="$style.title">Simon Says</h1>
+        <p :class="$style.subtitle">Repeat the sequence!</p>
+      </div>
+      
+      <div :class="$style.gameStats">
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Round</span>
+          <span :class="$style.statValue">{{ simonRound }}/10</span>
+        </div>
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Status</span>
+          <span :class="$style.statValue">{{ simonStatus }}</span>
+        </div>
+      </div>
+      
+      <div 
+        v-if="!simonGameStarted"
+        :class="$style.simonStartScreen"
+      >
+        <div :class="$style.simonInstructions">
+          <h2>How to Play</h2>
+          <p>🧠 Watch the Tamagotchis light up in sequence</p>
+          <p>🎯 Click them in the same order</p>
+          <p>📈 Each round adds one more to the sequence</p>
+          <p>🏆 Complete 10 rounds to win!</p>
+          <button :class="$style.startButton" @click="startSimonGame">
+            Start Game
+          </button>
+        </div>
+      </div>
+      
+      <div 
+        v-else
+        :class="$style.simonGameArea"
+      >
+        <div :class="$style.simonGrid">
+          <div
+            v-for="(tama, index) in tamagotchis"
+            :key="tama.id"
+            :class="[
+              $style.simonTamagotchi,
+              { 
+                [$style.simonActive]: simonActiveTama === index,
+                [$style.simonClickable]: simonPlayerTurn && !simonGameOver
+              }
+            ]"
+            @click="handleSimonClick(index)"
+          >
+            <img :src="tama.image" :alt="tama.name" />
+          </div>
+        </div>
+      </div>
+      
+      <!-- Game Over / Win screens -->
+      <div v-if="simonGameOver && !simonWon" :class="$style.gameOverMessage">
+        <h2>Wrong Sequence!</h2>
+        <p>You reached round {{ simonRound }}</p>
+        <p>Try again to reach round 10!</p>
+        <button :class="$style.playAgainButton" @click="backToMenu">
+          Back to Menu
+        </button>
+      </div>
+      
+      <div v-if="simonWon" :class="$style.winMessage">
+        <h2>Perfect!</h2>
+        <p>You completed all 10 rounds!</p>
         <button :class="$style.playAgainButton" @click="backToMenu">
           Back to Menu
         </button>
@@ -553,6 +641,135 @@ const stopMoving = () => {
   keysPressed.value.ArrowRight = false;
 };
 
+// ========== SIMON SAYS GAME ==========
+const SIMON_WIN_ROUNDS = 10;
+
+const simonGameStarted = ref(false);
+const simonGameOver = ref(false);
+const simonWon = ref(false);
+const simonRound = ref(0);
+const simonSequence = ref([]);
+const simonPlayerSequence = ref([]);
+const simonPlayerTurn = ref(false);
+const simonActiveTama = ref(-1);
+const simonStatus = ref('Watch');
+
+const startSimonGame = async () => {
+  if (!currentPet.value) {
+    alert('❌ You need a Tamagotchi to play!');
+    router.push('/tamago');
+    return;
+  }
+  
+  if (currentPet.value.energy < 25) {
+    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
+    return;
+  }
+  
+  simonGameStarted.value = true;
+  simonGameOver.value = false;
+  simonWon.value = false;
+  simonRound.value = 1;
+  simonSequence.value = [];
+  simonPlayerSequence.value = [];
+  
+  // Démarrer le premier round
+  setTimeout(() => {
+    nextSimonRound();
+  }, 1000);
+};
+
+const nextSimonRound = () => {
+  simonPlayerTurn.value = false;
+  simonPlayerSequence.value = [];
+  simonStatus.value = 'Watch';
+  
+  // Ajouter un nouveau Tamagotchi à la séquence
+  const randomIndex = Math.floor(Math.random() * tamagotchis.length);
+  simonSequence.value.push(randomIndex);
+  
+  // Afficher la séquence
+  setTimeout(() => {
+    playSimonSequence();
+  }, 500);
+};
+
+const playSimonSequence = async () => {
+  for (let i = 0; i < simonSequence.value.length; i++) {
+    await new Promise(resolve => setTimeout(resolve, 600));
+    simonActiveTama.value = simonSequence.value[i];
+    await new Promise(resolve => setTimeout(resolve, 500));
+    simonActiveTama.value = -1;
+  }
+  
+  // Tour du joueur
+  simonPlayerTurn.value = true;
+  simonStatus.value = 'Your turn!';
+};
+
+const handleSimonClick = (index) => {
+  if (!simonPlayerTurn.value || simonGameOver.value) return;
+  
+  // Animation de clic
+  simonActiveTama.value = index;
+  setTimeout(() => {
+    simonActiveTama.value = -1;
+  }, 300);
+  
+  simonPlayerSequence.value.push(index);
+  
+  // Vérifier si le clic est correct
+  const currentStep = simonPlayerSequence.value.length - 1;
+  if (simonSequence.value[currentStep] !== index) {
+    // Mauvaise réponse
+    simonGameOver.value = true;
+    simonStatus.value = 'Wrong!';
+    return;
+  }
+  
+  // Vérifier si la séquence est complète
+  if (simonPlayerSequence.value.length === simonSequence.value.length) {
+    simonPlayerTurn.value = false;
+    simonStatus.value = 'Correct!';
+    
+    // Vérifier victoire
+    if (simonRound.value >= SIMON_WIN_ROUNDS) {
+      setTimeout(() => {
+        winSimonGame();
+      }, 800);
+    } else {
+      // Round suivant
+      simonRound.value++;
+      setTimeout(() => {
+        nextSimonRound();
+      }, 1500);
+    }
+  }
+};
+
+const winSimonGame = async () => {
+  simonGameOver.value = true;
+  simonWon.value = true;
+  simonStatus.value = 'Victory!';
+  
+  // Récompenses
+  if (currentPet.value) {
+    try {
+      const petId = currentPet.value._id;
+      const newFun = Math.min(100, currentPet.value.fun + 25);
+      const newEnergy = Math.max(0, currentPet.value.energy - 25);
+      
+      await petsStore.updatePet(petId, { fun: newFun, energy: newEnergy });
+      await petsStore.fetchPet(petId);
+      await petsStore.incrementGames(petId);
+      
+      console.log('🎉 Simon Says Victory! Fun: +25, Energy: -25');
+    } catch (error) {
+      console.error('❌ Error updating stats:', error);
+    }
+  }
+};
+
 // ========== NAVIGATION ==========
 const selectGame = (game) => {
   selectedGame.value = game;
@@ -568,6 +785,17 @@ const backToMenu = () => {
   catchGameOver.value = false;
   catchWon.value = false;
   fallingItems.value = [];
+  
+  // Reset Simon Says
+  simonGameStarted.value = false;
+  simonGameOver.value = false;
+  simonWon.value = false;
+  simonRound.value = 0;
+  simonSequence.value = [];
+  simonPlayerSequence.value = [];
+  simonPlayerTurn.value = false;
+  simonActiveTama.value = -1;
+  simonStatus.value = 'Watch';
 };
 
 const goBack = () => {
@@ -1048,6 +1276,103 @@ onBeforeUnmount(() => {
   filter: brightness(1.2);
 }
 
+/* ========== SIMON SAYS GAME ========== */
+.simonStartScreen {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.simonInstructions {
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+}
+
+.simonInstructions h2 {
+  font-size: 32px;
+  margin: 0 0 20px;
+  color: #000;
+}
+
+.simonInstructions p {
+  font-size: 18px;
+  margin: 12px 0;
+  color: #333;
+}
+
+.simonGameArea {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+.simonGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.simonTamagotchi {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.simonTamagotchi img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s;
+}
+
+.simonClickable {
+  cursor: pointer;
+}
+
+.simonClickable:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.simonActive {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+  box-shadow: 0 0 30px rgba(255, 217, 61, 0.8);
+  transform: scale(1.1);
+  animation: simonPulse 0.5s ease-in-out;
+}
+
+@keyframes simonPulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 217, 61, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(255, 217, 61, 1);
+  }
+}
+
+.simonActive img {
+  transform: scale(1.1);
+}
+
 /* ========== WIN/LOSE MESSAGES ========== */
 .winMessage,
 .gameOverMessage {
@@ -1146,6 +1471,10 @@ onBeforeUnmount(() => {
   .catchGameArea {
     height: 400px;
   }
+  
+  .simonGrid {
+    gap: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1174,6 +1503,14 @@ onBeforeUnmount(() => {
   
   .catchGameArea {
     height: 350px;
+  }
+  
+  .simonGrid {
+    gap: 12px;
+  }
+  
+  .simonTamagotchi {
+    padding: 12px;
   }
 }
 </style>

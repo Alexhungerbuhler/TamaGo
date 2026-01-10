@@ -51,7 +51,7 @@
     </div>
 
     <!-- Pet name - shown above hatched pet -->
-    <b :class="$style.petName" :style="{ transform: `translate(calc(-50% + ${petPositionX}px), calc(-50% + ${petPositionY}px))` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
+    <b v-if="isHatched" :class="$style.petName" :style="{ transform: `translate(calc(-50% + ${petPositionX}px), calc(-50% + ${petPositionY}px))` }">{{ currentPet?.name || 'Tamagotchi' }}</b>
     
     <!-- Crottes / Poops - displayed based on hygiene level -->
     <img
@@ -68,6 +68,7 @@
       <span v-if="!isHatched">
         Shake your phone<br/>{{ shakeCount }}/{{ shakesNeeded }} times
       </span>
+      <img v-if="!isHatched" src="/icons/ShakeIcon.svg" alt="Shake icon" :class="$style.shakeIcon" />
       <button 
         v-if="!isHatched && needsPermission && !permissionGranted" 
         @click="requestMotionPermission"
@@ -1224,6 +1225,13 @@ const requestMotionPermission = async () => {
   gap: 10px;
   width: 90%;
   text-align: center;
+}
+
+.shakeIcon {
+  width: clamp(80px, 20vw, 120px);
+  height: clamp(80px, 20vw, 120px);
+  margin-top: 10px;
+  object-fit: contain;
 }
 
 .permissionButton {

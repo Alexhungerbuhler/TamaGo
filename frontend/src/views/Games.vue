@@ -837,12 +837,16 @@ onBeforeUnmount(() => {
 /* ========== BASE ========== */
 .gamesPage {
   width: 100%;
-  min-height: 100vh;
-  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  position: fixed;
+  top: 0;
+  left: 0;
   background-color: #c0fe90;
   padding: 20px;
   font-family: 'Pixelify Sans', sans-serif;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .background {

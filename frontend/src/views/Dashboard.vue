@@ -132,13 +132,16 @@ async function logout() {
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
 
 .dashboard-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
   padding: 2rem 1rem;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard-card {

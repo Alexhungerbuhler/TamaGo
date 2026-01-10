@@ -13,6 +13,7 @@
         <div :class="$style.iconWrapper">
           <!-- Jauge colorée en arrière-plan -->
           <img 
+            v-if="getStatValue(icon.label) > 0"
             :class="[$style.gaugeIcon, { [$style.gaugeRouge]: getStatValue(icon.label) < 25 }]"
             :src="getGaugeImage(getStatValue(icon.label))"
             :alt="`Gauge for ${icon.label}`"

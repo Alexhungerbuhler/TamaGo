@@ -15,32 +15,32 @@
       
       <div :class="$style.gameCards">
         <div :class="$style.gameCard" @click="selectGame('memory')">
-          <div :class="$style.gameIcon">🃏</div>
+          <img :class="$style.gameIcon" src="/icons/card.png" alt="Memory" />
           <h2 :class="$style.gameCardTitle">Memory</h2>
           <p :class="$style.gameCardDesc">Match Tamagotchi pairs</p>
           <div :class="$style.gameCardCost">
-            <span>⚡ 25</span>
-            <span>🎉 +25</span>
+            <span>+25</span>
+            <span>+25</span>
           </div>
         </div>
         
         <div :class="$style.gameCard" @click="selectGame('catch')">
-          <div :class="$style.gameIcon">🧺</div>
+          <img :class="$style.gameIcon" src="/icons/basket.png" alt="Catch Game" />
           <h2 :class="$style.gameCardTitle">Catch Game</h2>
           <p :class="$style.gameCardDesc">Catch falling Tamagotchis</p>
           <div :class="$style.gameCardCost">
-            <span>⚡ 25</span>
-            <span>🎉 +25</span>
+            <span>+25</span>
+            <span>+25</span>
           </div>
         </div>
         
         <div :class="$style.gameCard" @click="selectGame('simon')">
-          <div :class="$style.gameIcon">🧠</div>
+          <img :class="$style.gameIcon" src="/icons/brain.png" alt="Simon Says" />
           <h2 :class="$style.gameCardTitle">Simon Says</h2>
           <p :class="$style.gameCardDesc">Repeat the sequence</p>
           <div :class="$style.gameCardCost">
-            <span>⚡ 25</span>
-            <span>🎉 +25</span>
+            <span>+25</span>
+            <span>+25</span>
           </div>
         </div>
       </div>
@@ -141,8 +141,8 @@
       >
         <div :class="$style.catchInstructions">
           <h2>How to Play</h2>
-          <p>🎯 Catch {{ CATCH_WIN_SCORE }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
-          <p>⌨️ Use Arrow Keys or Touch to move the basket</p>
+          <p>Catch {{ CATCH_WIN_SCORE }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
+          <p>Use Arrow Keys or Touch to move the basket</p>
           <button :class="$style.startButton" @click="startCatchGame">
             Start Game
           </button>
@@ -249,10 +249,10 @@
       >
         <div :class="$style.simonInstructions">
           <h2>How to Play</h2>
-          <p>🧠 Watch the Tamagotchis light up in sequence</p>
-          <p>🎯 Click them in the same order</p>
-          <p>📈 Each round adds one more to the sequence</p>
-          <p>🏆 Complete 10 rounds to win!</p>
+          <p>Watch the Tamagotchis light up in sequence</p>
+          <p>Click them in the same order</p>
+          <p>Each round adds one more to the sequence</p>
+          <p>Complete 10 rounds to win!</p>
           <button :class="$style.startButton" @click="startSimonGame">
             Start Game
           </button>
@@ -915,8 +915,10 @@ onBeforeUnmount(() => {
 }
 
 .gameIcon {
-  font-size: 64px;
+  width: 80px;
+  height: 80px;
   margin-bottom: 16px;
+  object-fit: contain;
 }
 
 .gameCardTitle {
@@ -1494,7 +1496,8 @@ onBeforeUnmount(() => {
   }
   
   .gameIcon {
-    font-size: 48px;
+    width: 60px;
+    height: 60px;
   }
   
   .gameCardTitle {

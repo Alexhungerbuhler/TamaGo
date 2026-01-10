@@ -24,36 +24,22 @@ class WebSocketService {
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
       const host = window.location.host;
       
-      console.log('🌐 Frontend URL:', window.location.href);
-      console.log('🌐 Protocol:', protocol, 'Host:', host);
-      
       // Si on est en dev local, rester sur localhost:3000
       if (host.includes('localhost')) {
         WS_URL = 'http://localhost:3000';
-      } else if (host.includes('render.com')) {
-        // En production sur Render
-        // Si le domaine est tamago-frontend.onrender.com
-        // On doit se connecter au backend qui est sur le même domaine
-        // Render fait un proxy vers le backend
-        WS_URL = `${protocol}//${host}`;
-        console.log('🎯 Render detected, using:', WS_URL);
       } else {
-        // Fallback pour autres environnements
+        // En production sur Render, inférer l'URL du backend
+        // Par exemple: tamago-frontend.onrender.com -> tamago-backend.onrender.com
+        // Ou garder le même domaine si c'est un proxy
         WS_URL = `${protocol}//${host}`;
       }
     }
-
-    console.log('📡 Connecting to WebSocket:', WS_URL);
 
     this.socket = io(WS_URL, {
       auth: {
         token
       },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5
+      transports: ['websocket', 'polling']
     });
 
     // Événements de connexion

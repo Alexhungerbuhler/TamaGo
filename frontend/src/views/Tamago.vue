@@ -46,7 +46,8 @@
     <!-- Main content icons (can be replaced with actual images) -->
     <div :class="$style.eggPlaceholder" @click="handleEggClick" :style="{ transform: `translateX(${petPositionX}px) translateY(${petPositionY}px)` }">
       <img v-if="!isHatched" src="/Eggs/egg.svg" alt="Egg" title="Egg" :class="{ [$style.shake]: isShaking }" />
-      <img v-else :src="hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
+      <!-- Show animation frame if animating, otherwise show normal pet image -->
+      <img v-else :src="currentAnimationFrame || hatchedPetImage" alt="Hatched Pet" title="Hatched Pet" :class="$style.hatchedPet" />
     </div>
 
     <!-- Pet name - shown above hatched pet -->
@@ -65,7 +66,7 @@
     <!-- Instruction text -->
     <b :class="$style.shakeYourPhone">
       <span v-if="!isHatched">
-        📱 Shake your phone<br/>{{ shakeCount }}/{{ shakesNeeded }} times
+        Shake your phone<br/>{{ shakeCount }}/{{ shakesNeeded }} times
       </span>
       <button 
         v-if="!isHatched && needsPermission && !permissionGranted" 
@@ -124,6 +125,50 @@ const isShaking = ref(false);
 const petPositionX = ref(0); // Position in pixels (-100 to 100)
 const petPositionY = ref(0); 
 const petMovementInterval = ref(null);
+
+// Animation system - for eating and other pet actions
+const isAnimating = ref(false);
+const currentAnimationFrame = ref(null);
+
+// Animation frames mapping for each pet type
+const animationFrames = {
+  '/Pets/buisson 1.png': ['/animations/buisson/frame1.png', '/animations/buisson/frame2.png'],
+  '/Pets/chatFeu 1.png': ['/animations/chatfeu/frame1.png', '/animations/chatfeu/frame2.png'],
+  '/Pets/goute 1.png': ['/animations/goute/frame1.png', '/animations/goute/frame2.png'],
+  '/Pets/jspcestquoi.png': ['/animations/jspquoi/frame1.png', '/animations/jspquoi/frame2.png'],
+  '/Pets/raichu.png': ['/animations/raichu/frame1.png', '/animations/raichu/frame2.png'],
+  '/Pets/renarddelumiere 1.png': ['/animations/renard/frame1.png', '/animations/renard/frame2.png'],
+  '/Pets/tortuepierre 1.png': ['/animations/tortuepierre/frame1.png', '/animations/tortuepierre/frame2.png']
+};
+
+// Play animation based on pet type
+const playAnimation = async (petImage) => {
+  const frames = animationFrames[petImage];
+  
+  // Only play animation if frames exist for this pet
+  if (!frames || frames.length === 0) {
+    console.log('No animation frames for pet:', petImage);
+    return;
+  }
+  
+  isAnimating.value = true;
+  console.log('Starting animation for pet:', petImage, 'with', frames.length, 'frames');
+  
+  try {
+    // Cycle through frames 3 times to make animation visible
+    for (let cycle = 0; cycle < 3; cycle++) {
+      for (const frame of frames) {
+        currentAnimationFrame.value = frame;
+        await new Promise(resolve => setTimeout(resolve, 200)); // 200ms per frame
+      }
+    }
+  } finally {
+    // Return to normal pet image
+    currentAnimationFrame.value = null;
+    isAnimating.value = false;
+    console.log('Animation finished');
+  }
+};
 
 // Poop system - based on hygiene level (apparaissent automatiquement avec la diminution)
 const nbPoops = computed(() => {
@@ -200,13 +245,13 @@ const stopPetMovement = () => {
 };
 // Available pet images for hatching
 const availablePets = [
-  '/Pets/buisson 1.svg',
-  '/Pets/chatFeu 1.svg',
-  '/Pets/goute 1.svg',
-  '/Pets/jspcestquoi 1.svg',
-  '/Pets/raichu 1.svg',
-  '/Pets/renarddelumiere 1.svg',
-  '/Pets/tortuepierre 1.svg'
+  '/Pets/buisson 1.png',
+  '/Pets/chatFeu 1.png',
+  '/Pets/goute 1.png',
+  '/Pets/jspcestquoi.png',
+  '/Pets/raichu.png',
+  '/Pets/renarddelumiere 1.png',
+  '/Pets/tortuepierre 1.png'
 ];
 
 // Get random pet image
@@ -541,6 +586,10 @@ const handleUse = async () => {
           console.log('Executing hunger action');
           result = await petsStore.feedPet(petId);
           console.log('Feed result:', result);
+          // Play eating animation
+          if (hatchedPetImage.value) {
+            await playAnimation(hatchedPetImage.value);
+          }
           break;
         case 'hygiene':
           console.log('Executing hygiene action');

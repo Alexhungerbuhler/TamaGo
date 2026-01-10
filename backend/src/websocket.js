@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import * as config from '../config.js';
 import User from './models/User.js';
 import Tamagotchi from './models/Tamagotchi.js';
+import { executeTick } from './api/tick.js';
 
 let io;
 
@@ -217,6 +218,17 @@ export function initializeWebSocket(httpServer) {
       });
     });
   });
+
+  // Système de tick automatique - diminue les stats toutes les 5 minutes
+  setInterval(async () => {
+    try {
+      console.log('🕒 Executing automatic tick (every 5 minutes)...');
+      await executeTick();
+      console.log('✅ Automatic tick completed');
+    } catch (err) {
+      console.error('❌ Error during automatic tick:', err);
+    }
+  }, 300000); // Toutes les 5 minutes (300 secondes)
 
   // Fonction pour vérifier périodiquement la santé des pets
   setInterval(async () => {

@@ -111,25 +111,12 @@ const initGame = async () => {
     return;
   }
   
-  if (currentPet.value.energy < 10) {
-    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 10 energy to play.\nLet it rest!');
+  if (currentPet.value.energy < 25) {
+    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
     return;
   }
   
-  // Consommer l'énergie au début de la partie (-10)
-  try {
-    const petId = currentPet.value._id;
-    const newEnergy = Math.max(0, currentPet.value.energy - 10);
-    
-    await petsStore.updatePet(petId, { energy: newEnergy });
-    await petsStore.fetchPet(petId);
-    
-    console.log('✅ Energy consumed: -10');
-  } catch (error) {
-    console.error('❌ Error consuming energy:', error);
-    alert('Error starting game. Please try again.');
-    return;
-  }
+  // L'énergie sera consommée seulement à la victoire (-25)
   
   // Créer les paires (2 cartes de chaque Tamagotchi)
   const pairs = [];
@@ -209,17 +196,18 @@ const resetGame = () => {
   initGame();
 };
 
-// Watcher pour détecter la victoire et ajouter du fun
+// Watcher pour détecter la victoire et ajouter du fun + consommer energy
 watch(gameWon, async (newVal) => {
   if (newVal && currentPet.value) {
     try {
       const petId = currentPet.value._id;
-      const newFun = Math.min(100, currentPet.value.fun + 10);
+      const newFun = Math.min(100, currentPet.value.fun + 25);
+      const newEnergy = Math.max(0, currentPet.value.energy - 25);
       
-      await petsStore.updatePet(petId, { fun: newFun });
+      await petsStore.updatePet(petId, { fun: newFun, energy: newEnergy });
       await petsStore.fetchPet(petId);
       
-      console.log('🎉 Victory! Fun increased: +10');
+      console.log('🎉 Victory! Fun increased: +25, Energy consumed: -25');
     } catch (error) {
       console.error('❌ Error updating fun:', error);
     }

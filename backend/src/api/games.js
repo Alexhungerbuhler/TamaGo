@@ -13,8 +13,8 @@ const availableGames = [
     name: "Memory Game",
     description: "Test your memory by matching pairs of cards!",
     icon: "🧠",
-    funBonus: 20,
-    energyCost: 10,
+    funBonus: 25,
+    energyCost: 25,
     hungerCost: 5,
     difficulty: "easy"
   },
@@ -24,7 +24,7 @@ const availableGames = [
     description: "Jump as high as you can without falling!",
     icon: "🦘",
     funBonus: 25,
-    energyCost: 15,
+    energyCost: 25,
     hungerCost: 8,
     difficulty: "medium"
   },
@@ -33,8 +33,8 @@ const availableGames = [
     name: "Catch the Stars",
     description: "Catch falling stars to earn points!",
     icon: "⭐",
-    funBonus: 18,
-    energyCost: 12,
+    funBonus: 25,
+    energyCost: 25,
     hungerCost: 6,
     difficulty: "easy"
   },
@@ -43,8 +43,8 @@ const availableGames = [
     name: "Puzzle Master",
     description: "Solve puzzles to challenge your brain!",
     icon: "🧩",
-    funBonus: 22,
-    energyCost: 8,
+    funBonus: 25,
+    energyCost: 25,
     hungerCost: 4,
     difficulty: "hard"
   }

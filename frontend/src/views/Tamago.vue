@@ -124,13 +124,14 @@ const petPositionX = ref(0); // Position in pixels (-100 to 100)
 const petPositionY = ref(0); 
 const petMovementInterval = ref(null);
 
-// Poop system - based on hygiene level
+// Poop system - based on hygiene level (apparaissent automatiquement avec la diminution)
 const nbPoops = computed(() => {
   if (!currentPet.value || !isHatched.value) return 0;
   const hygiene = currentPet.value.hygiene || 0;
   
   // Paliers exacts basés sur les états de la jauge
-  if (hygiene > 75) return 0;      // Vert (100-76%)
+  // Les poops disparaissent complètement quand hygiene >= 76 (vert)
+  if (hygiene > 75) return 0;      // Vert (100-76%) - Aucun poop
   if (hygiene > 50) return 1;      // Jaune (75-51%)
   if (hygiene > 25) return 2;      // Orange (50-26%)
   if (hygiene > 0) return 3;       // Rouge (25-1%)
@@ -533,10 +534,9 @@ const handleUse = async () => {
           console.log('Toilet result:', result);
           break;
         case 'fun':
-          console.log('Executing fun action');
-          result = await petsStore.playWithPet(petId);
-          console.log('Play result:', result);
-          break;
+          // Fun ne peut augmenter QUE via les games, pas ici
+          console.log('Fun can only increase by playing games!');
+          return; // Sortir sans action
         case 'energy':
           console.log('Executing energy action');
           result = await petsStore.sleepPet(petId);

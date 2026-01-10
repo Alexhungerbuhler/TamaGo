@@ -1186,7 +1186,7 @@ const requestMotionPermission = async () => {
 
 .petName {
   position: absolute;
-  top: calc(50% - 12vh);
+  top: calc(50% - 5vh);
   left: 50%;
   font-size: clamp(18px, 5vw, 24px);
   font-weight: 700;

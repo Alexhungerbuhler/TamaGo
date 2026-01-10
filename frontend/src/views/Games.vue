@@ -318,9 +318,10 @@ const tamagotchis = [
   { id: 1, name: 'Buisson', image: '/Pets/buisson 1.png' },
   { id: 2, name: 'Chat Feu', image: '/Pets/chatFeu 1.png' },
   { id: 3, name: 'Goutte', image: '/Pets/goute 1.png' },
-  { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi 1.png' },
-  { id: 5, name: 'Raichu', image: '/Pets/raichu 1.png' },
-  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.png' }
+  { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi.png' },
+  { id: 5, name: 'Raichu', image: '/Pets/raichu.png' },
+  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.png' },
+  { id: 7, name: 'Tortue Pierre', image: '/Pets/tortuepierre 1.png' }
 ];
 
 // ========== MEMORY GAME ==========
@@ -429,8 +430,9 @@ watch(memoryWon, async (newVal) => {
 // ========== CATCH GAME ==========
 const CATCH_DURATION = 30; // secondes
 const CATCH_WIN_SCORE = 15; // score à atteindre
-const CATCH_SPAWN_INTERVAL = 1000; // millisecondes
-const FALL_SPEED = 2; // pixels par frame
+const CATCH_SPAWN_INTERVAL = 800; // millisecondes
+const FALL_SPEED = 2; // pixels par frame (base speed)
+const FALL_SPEED_MAX = 4; // pixels par frame (max random speed for difficulty)
 const BASKET_SPEED = 8; // pixels par frame
 const BASKET_WIDTH = 80;
 const ITEM_SIZE = 50;
@@ -501,13 +503,16 @@ const spawnFallingItem = () => {
   const gameWidth = catchGameArea.value.offsetWidth;
   const randomX = Math.random() * (gameWidth - ITEM_SIZE);
   const randomTama = tamagotchis[Math.floor(Math.random() * tamagotchis.length)];
+  // Random speed between FALL_SPEED and FALL_SPEED_MAX for difficulty variation
+  const randomSpeed = FALL_SPEED + Math.random() * (FALL_SPEED_MAX - FALL_SPEED);
   
   fallingItems.value.push({
     id: itemIdCounter++,
     x: randomX,
     y: -ITEM_SIZE,
     image: randomTama.image,
-    name: randomTama.name
+    name: randomTama.name,
+    speed: randomSpeed
   });
 };
 
@@ -519,7 +524,8 @@ const updateCatchGame = () => {
   
   // Mettre à jour les items qui tombent
   fallingItems.value = fallingItems.value.filter(item => {
-    item.y += FALL_SPEED;
+    // Use item's own speed (random) instead of constant
+    item.y += item.speed || FALL_SPEED;
     
     // Vérifier collision avec le panier
     const basketY = gameHeight - 100; // Position du panier
@@ -1202,8 +1208,8 @@ onBeforeUnmount(() => {
   z-index: 1;
   width: 100%;
   max-width: 600px;
-  height: 500px;
-  margin: 0 auto;
+  height: 600px;
+  margin: 20px auto 0;
   background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
   border: 4px solid #000;
   border-radius: 16px;
@@ -1245,20 +1251,22 @@ onBeforeUnmount(() => {
 }
 
 .arrowControls {
-  position: relative;
+  position: fixed;
+  bottom: 80px;
+  left: 0;
+  right: 0;
   z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 80px;
-  margin-top: 20px;
+  gap: 120px;
   padding: 20px;
 }
 
 .arrowLeft,
 .arrowRight {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;

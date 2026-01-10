@@ -3,87 +3,229 @@
     <!-- Background -->
     <img :class="$style.background" src="/background/background.svg" alt="background" />
     
-    <!-- Header -->
-    <div :class="$style.header">
-      <button :class="$style.backButton" @click="goBack">
-        <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
-      </button>
-      <h1 :class="$style.title">Memory Game</h1>
-      <p :class="$style.subtitle">Find all the Tamagotchi pairs!</p>
-    </div>
-    
-    <!-- Game Stats -->
-    <div :class="$style.gameStats">
-      <div :class="$style.statBox">
-        <span :class="$style.statLabel">Moves</span>
-        <span :class="$style.statValue">{{ moves }}</span>
+    <!-- Menu de sélection des jeux -->
+    <div v-if="!selectedGame" :class="$style.gameMenu">
+      <div :class="$style.menuHeader">
+        <button :class="$style.backButton" @click="goBack">
+          <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
+        </button>
+        <h1 :class="$style.menuTitle">Arcade</h1>
+        <p :class="$style.menuSubtitle">Choose a game to play!</p>
       </div>
-      <div :class="$style.statBox">
-        <span :class="$style.statLabel">Pairs Found</span>
-        <span :class="$style.statValue">{{ pairsFound }}/6</span>
-      </div>
-      <button 
-        v-if="gameWon" 
-        :class="$style.playAgainButton" 
-        @click="resetGame"
-      >
-        Play Again
-      </button>
-      <button 
-        v-else 
-        :class="$style.resetButton" 
-        @click="resetGame"
-      >
-        Restart
-      </button>
-    </div>
-    
-    <!-- Memory Grid -->
-    <div :class="$style.memoryGrid">
-      <div 
-        v-for="(card, index) in cards" 
-        :key="index"
-        :class="[
-          $style.card,
-          { 
-            [$style.flipped]: card.flipped,
-            [$style.matched]: card.matched,
-            [$style.wrong]: card.wrong
-          }
-        ]"
-        @click="handleCardClick(index)"
-      >
-        <div :class="$style.cardInner">
-          <!-- Front (blue) -->
-          <div :class="$style.cardFront"></div>
-          <!-- Back (Tamagotchi image) -->
-          <div :class="$style.cardBack">
-            <img :src="card.image" :alt="card.name" />
+      
+      <div :class="$style.gameCards">
+        <div :class="$style.gameCard" @click="selectGame('memory')">
+          <div :class="$style.gameIcon">🃏</div>
+          <h2 :class="$style.gameCardTitle">Memory</h2>
+          <p :class="$style.gameCardDesc">Match Tamagotchi pairs</p>
+          <div :class="$style.gameCardCost">
+            <span>⚡ 25</span>
+            <span>🎉 +25</span>
+          </div>
+        </div>
+        
+        <div :class="$style.gameCard" @click="selectGame('catch')">
+          <div :class="$style.gameIcon">🧺</div>
+          <h2 :class="$style.gameCardTitle">Catch Game</h2>
+          <p :class="$style.gameCardDesc">Catch falling Tamagotchis</p>
+          <div :class="$style.gameCardCost">
+            <span>⚡ 25</span>
+            <span>🎉 +25</span>
           </div>
         </div>
       </div>
     </div>
     
-    <!-- Win Message -->
-    <div v-if="gameWon" :class="$style.winMessage">
-      <h2>Congratulations!</h2>
-      <p>You found all pairs in {{ moves }} moves!</p>
+    <!-- Memory Game -->
+    <div v-if="selectedGame === 'memory'" :class="$style.gameContainer">
+      <div :class="$style.header">
+        <button :class="$style.backButton" @click="backToMenu">
+          <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
+        </button>
+        <h1 :class="$style.title">Memory Game</h1>
+        <p :class="$style.subtitle">Find all the Tamagotchi pairs!</p>
+      </div>
+      
+      <div :class="$style.gameStats">
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Moves</span>
+          <span :class="$style.statValue">{{ moves }}</span>
+        </div>
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Pairs Found</span>
+          <span :class="$style.statValue">{{ pairsFound }}/6</span>
+        </div>
+        <button 
+          v-if="memoryWon" 
+          :class="$style.playAgainButton" 
+          @click="resetMemory"
+        >
+          Play Again
+        </button>
+        <button 
+          v-else 
+          :class="$style.resetButton" 
+          @click="resetMemory"
+        >
+          Restart
+        </button>
+      </div>
+      
+      <div :class="$style.memoryGrid">
+        <div 
+          v-for="(card, index) in cards" 
+          :key="index"
+          :class="[
+            $style.card,
+            { 
+              [$style.flipped]: card.flipped,
+              [$style.matched]: card.matched,
+              [$style.wrong]: card.wrong
+            }
+          ]"
+          @click="handleCardClick(index)"
+        >
+          <div :class="$style.cardInner">
+            <div :class="$style.cardFront"></div>
+            <div :class="$style.cardBack">
+              <img :src="card.image" :alt="card.name" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div v-if="memoryWon" :class="$style.winMessage">
+        <h2>Congratulations!</h2>
+        <p>You found all pairs in {{ moves }} moves!</p>
+      </div>
+    </div>
+    
+    <!-- Catch Game -->
+    <div v-if="selectedGame === 'catch'" :class="$style.gameContainer">
+      <div :class="$style.header">
+        <button :class="$style.backButton" @click="backToMenu">
+          <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" :class="$style.backIcon" />
+        </button>
+        <h1 :class="$style.title">Catch Game</h1>
+        <p :class="$style.subtitle">Catch the falling Tamagotchis!</p>
+      </div>
+      
+      <div :class="$style.gameStats">
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Score</span>
+          <span :class="$style.statValue">{{ catchScore }}</span>
+        </div>
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Time</span>
+          <span :class="$style.statValue">{{ catchTimeLeft }}s</span>
+        </div>
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Goal</span>
+          <span :class="$style.statValue">{{ CATCH_WIN_SCORE }}</span>
+        </div>
+      </div>
+      
+      <div 
+        v-if="!catchGameStarted"
+        :class="$style.catchStartScreen"
+      >
+        <div :class="$style.catchInstructions">
+          <h2>How to Play</h2>
+          <p>🎯 Catch {{ CATCH_WIN_SCORE }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
+          <p>⌨️ Use Arrow Keys or Touch to move the basket</p>
+          <button :class="$style.startButton" @click="startCatchGame">
+            Start Game
+          </button>
+        </div>
+      </div>
+      
+      <div 
+        v-else
+        ref="catchGameArea"
+        :class="$style.catchGameArea"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+      >
+        <!-- Falling Tamagotchis -->
+        <div
+          v-for="item in fallingItems"
+          :key="item.id"
+          :class="$style.fallingItem"
+          :style="{
+            left: item.x + 'px',
+            top: item.y + 'px'
+          }"
+        >
+          <img :src="item.image" :alt="item.name" />
+        </div>
+        
+        <!-- Basket -->
+        <div
+          :class="$style.basket"
+          :style="{ left: basketX + 'px' }"
+        >
+          <img :class="$style.basketImage" src="/icons/basket.png" alt="Basket" />
+        </div>
+      </div>
+      
+      <!-- Arrow Controls -->
+      <div v-if="catchGameStarted && !catchGameOver" :class="$style.arrowControls">
+        <img 
+          :class="$style.arrowLeft" 
+          src="/Arrows/fleches droite et gauche 2.svg" 
+          alt="Left arrow" 
+          @mousedown="startMovingLeft"
+          @mouseup="stopMoving"
+          @mouseleave="stopMoving"
+          @touchstart.prevent="startMovingLeft"
+          @touchend.prevent="stopMoving"
+        />
+        <img 
+          :class="$style.arrowRight" 
+          src="/Arrows/fleches droite et gauche 1.svg" 
+          alt="Right arrow" 
+          @mousedown="startMovingRight"
+          @mouseup="stopMoving"
+          @mouseleave="stopMoving"
+          @touchstart.prevent="startMovingRight"
+          @touchend.prevent="stopMoving"
+        />
+      </div>
+      
+      <!-- Game Over / Win screens -->
+      <div v-if="catchGameOver && !catchWon" :class="$style.gameOverMessage">
+        <h2>Time's Up!</h2>
+        <p>You caught {{ catchScore }} Tamagotchis</p>
+        <p>You needed {{ CATCH_WIN_SCORE }} to win</p>
+        <button :class="$style.playAgainButton" @click="backToMenu">
+          Back to Menu
+        </button>
+      </div>
+      
+      <div v-if="catchWon" :class="$style.winMessage">
+        <h2>Victory!</h2>
+        <p>You caught {{ catchScore }} Tamagotchis!</p>
+        <button :class="$style.playAgainButton" @click="backToMenu">
+          Back to Menu
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePetsStore } from '../store/pets';
 
 const router = useRouter();
 const petsStore = usePetsStore();
 
-// Pet actuel
+// ========== GÉNÉRAL ==========
 const currentPet = computed(() => petsStore.currentPet || (petsStore.petsList.length > 0 ? petsStore.petsList[0] : null));
+const selectedGame = ref(null);
 
-// Les 6 Tamagotchis pour grille 4x3
 const tamagotchis = [
   { id: 1, name: 'Buisson', image: '/Pets/buisson 1.svg' },
   { id: 2, name: 'Chat Feu', image: '/Pets/chatFeu 1.svg' },
@@ -93,18 +235,16 @@ const tamagotchis = [
   { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.svg' }
 ];
 
-// État du jeu
+// ========== MEMORY GAME ==========
 const cards = ref([]);
 const flippedCards = ref([]);
 const moves = ref(0);
 const pairsFound = ref(0);
 const canFlip = ref(true);
 
-const gameWon = computed(() => pairsFound.value === 6);
+const memoryWon = computed(() => pairsFound.value === 6);
 
-// Initialiser le jeu
-const initGame = async () => {
-  // Vérifier que le pet a assez d'énergie
+const initMemory = async () => {
   if (!currentPet.value) {
     alert('❌ You need a Tamagotchi to play!');
     router.push('/tamago');
@@ -116,16 +256,12 @@ const initGame = async () => {
     return;
   }
   
-  // L'énergie sera consommée seulement à la victoire (-25)
-  
-  // Créer les paires (2 cartes de chaque Tamagotchi)
   const pairs = [];
   tamagotchis.forEach(tama => {
     pairs.push({ ...tama, flipped: false, matched: false, wrong: false });
     pairs.push({ ...tama, flipped: false, matched: false, wrong: false });
   });
   
-  // Mélanger les cartes (Fisher-Yates shuffle)
   for (let i = pairs.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
@@ -138,24 +274,16 @@ const initGame = async () => {
   canFlip.value = true;
 };
 
-// Gérer le clic sur une carte
 const handleCardClick = (index) => {
   const card = cards.value[index];
   
-  // Ne rien faire si :
-  // - La carte est déjà retournée
-  // - La carte est déjà trouvée
-  // - On ne peut pas retourner (animation en cours)
-  // - Deux cartes sont déjà retournées
   if (!canFlip.value || card.flipped || card.matched || flippedCards.value.length === 2) {
     return;
   }
   
-  // Retourner la carte
   card.flipped = true;
   flippedCards.value.push(index);
   
-  // Si c'est la deuxième carte retournée
   if (flippedCards.value.length === 2) {
     moves.value++;
     canFlip.value = false;
@@ -164,9 +292,7 @@ const handleCardClick = (index) => {
     const firstCard = cards.value[firstIndex];
     const secondCard = cards.value[secondIndex];
     
-    // Vérifier si c'est une paire
     if (firstCard.id === secondCard.id) {
-      // Paire trouvée !
       setTimeout(() => {
         firstCard.matched = true;
         secondCard.matched = true;
@@ -175,7 +301,6 @@ const handleCardClick = (index) => {
         canFlip.value = true;
       }, 500);
     } else {
-      // Pas la bonne paire
       firstCard.wrong = true;
       secondCard.wrong = true;
       
@@ -191,13 +316,11 @@ const handleCardClick = (index) => {
   }
 };
 
-// Réinitialiser le jeu
-const resetGame = () => {
-  initGame();
+const resetMemory = () => {
+  initMemory();
 };
 
-// Watcher pour détecter la victoire et ajouter du fun + consommer energy
-watch(gameWon, async (newVal) => {
+watch(memoryWon, async (newVal) => {
   if (newVal && currentPet.value) {
     try {
       const petId = currentPet.value._id;
@@ -206,24 +329,253 @@ watch(gameWon, async (newVal) => {
       
       await petsStore.updatePet(petId, { fun: newFun, energy: newEnergy });
       await petsStore.fetchPet(petId);
-      
-      // Incrémenter le compteur de jeux
       await petsStore.incrementGames(petId);
       
-      console.log('🎉 Victory! Fun increased: +25, Energy consumed: -25, Games counter incremented');
+      console.log('🎉 Memory Victory! Fun: +25, Energy: -25');
     } catch (error) {
-      console.error('❌ Error updating fun:', error);
+      console.error('❌ Error updating stats:', error);
     }
   }
 });
 
-// Navigation
+// ========== CATCH GAME ==========
+const CATCH_DURATION = 30; // secondes
+const CATCH_WIN_SCORE = 15; // score à atteindre
+const CATCH_SPAWN_INTERVAL = 1000; // millisecondes
+const FALL_SPEED = 2; // pixels par frame
+const BASKET_SPEED = 8; // pixels par frame
+const BASKET_WIDTH = 80;
+const ITEM_SIZE = 50;
+
+const catchGameArea = ref(null);
+const catchScore = ref(0);
+const catchTimeLeft = ref(CATCH_DURATION);
+const catchGameStarted = ref(false);
+const catchGameOver = ref(false);
+const catchWon = ref(false);
+
+const basketX = ref(0);
+const fallingItems = ref([]);
+let catchGameLoop = null;
+let catchSpawnLoop = null;
+let catchTimerLoop = null;
+let itemIdCounter = 0;
+
+const keysPressed = ref({
+  ArrowLeft: false,
+  ArrowRight: false
+});
+
+const touchStartX = ref(0);
+const touchCurrentX = ref(0);
+
+const startCatchGame = async () => {
+  if (!currentPet.value) {
+    alert('❌ You need a Tamagotchi to play!');
+    router.push('/tamago');
+    return;
+  }
+  
+  if (currentPet.value.energy < 25) {
+    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
+    return;
+  }
+  
+  catchGameStarted.value = true;
+  catchScore.value = 0;
+  catchTimeLeft.value = CATCH_DURATION;
+  catchGameOver.value = false;
+  catchWon.value = false;
+  fallingItems.value = [];
+  
+  // Position initiale du panier au centre
+  setTimeout(() => {
+    if (catchGameArea.value) {
+      const gameWidth = catchGameArea.value.offsetWidth;
+      basketX.value = (gameWidth - BASKET_WIDTH) / 2;
+    }
+  }, 0);
+  
+  // Démarrer les intervalles
+  catchSpawnLoop = setInterval(spawnFallingItem, CATCH_SPAWN_INTERVAL);
+  catchGameLoop = requestAnimationFrame(updateCatchGame);
+  catchTimerLoop = setInterval(() => {
+    catchTimeLeft.value--;
+    if (catchTimeLeft.value <= 0) {
+      endCatchGame();
+    }
+  }, 1000);
+};
+
+const spawnFallingItem = () => {
+  if (!catchGameArea.value || catchGameOver.value) return;
+  
+  const gameWidth = catchGameArea.value.offsetWidth;
+  const randomX = Math.random() * (gameWidth - ITEM_SIZE);
+  const randomTama = tamagotchis[Math.floor(Math.random() * tamagotchis.length)];
+  
+  fallingItems.value.push({
+    id: itemIdCounter++,
+    x: randomX,
+    y: -ITEM_SIZE,
+    image: randomTama.image,
+    name: randomTama.name
+  });
+};
+
+const updateCatchGame = () => {
+  if (!catchGameArea.value || catchGameOver.value) return;
+  
+  const gameHeight = catchGameArea.value.offsetHeight;
+  const gameWidth = catchGameArea.value.offsetWidth;
+  
+  // Mettre à jour les items qui tombent
+  fallingItems.value = fallingItems.value.filter(item => {
+    item.y += FALL_SPEED;
+    
+    // Vérifier collision avec le panier
+    const basketY = gameHeight - 100; // Position du panier
+    if (
+      item.y + ITEM_SIZE >= basketY &&
+      item.y <= basketY + 60 &&
+      item.x + ITEM_SIZE >= basketX.value &&
+      item.x <= basketX.value + BASKET_WIDTH
+    ) {
+      catchScore.value++;
+      
+      // Vérifier victoire
+      if (catchScore.value >= CATCH_WIN_SCORE) {
+        winCatchGame();
+      }
+      
+      return false; // Supprimer l'item
+    }
+    
+    // Supprimer si hors écran
+    if (item.y > gameHeight) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Déplacer le panier avec clavier
+  if (keysPressed.value.ArrowLeft) {
+    basketX.value = Math.max(0, basketX.value - BASKET_SPEED);
+  }
+  if (keysPressed.value.ArrowRight) {
+    basketX.value = Math.min(gameWidth - BASKET_WIDTH, basketX.value + BASKET_SPEED);
+  }
+  
+  catchGameLoop = requestAnimationFrame(updateCatchGame);
+};
+
+const winCatchGame = async () => {
+  catchGameOver.value = true;
+  catchWon.value = true;
+  stopCatchGame();
+  
+  // Récompenses
+  if (currentPet.value) {
+    try {
+      const petId = currentPet.value._id;
+      const newFun = Math.min(100, currentPet.value.fun + 25);
+      const newEnergy = Math.max(0, currentPet.value.energy - 25);
+      
+      await petsStore.updatePet(petId, { fun: newFun, energy: newEnergy });
+      await petsStore.fetchPet(petId);
+      await petsStore.incrementGames(petId);
+      
+      console.log('🎉 Catch Game Victory! Fun: +25, Energy: -25');
+    } catch (error) {
+      console.error('❌ Error updating stats:', error);
+    }
+  }
+};
+
+const endCatchGame = () => {
+  catchGameOver.value = true;
+  stopCatchGame();
+};
+
+const stopCatchGame = () => {
+  if (catchSpawnLoop) clearInterval(catchSpawnLoop);
+  if (catchTimerLoop) clearInterval(catchTimerLoop);
+  if (catchGameLoop) cancelAnimationFrame(catchGameLoop);
+};
+
+const handleKeyDown = (e) => {
+  if (e.key in keysPressed.value) {
+    keysPressed.value[e.key] = true;
+  }
+};
+
+const handleKeyUp = (e) => {
+  if (e.key in keysPressed.value) {
+    keysPressed.value[e.key] = false;
+  }
+};
+
+const handleTouchStart = (e) => {
+  touchStartX.value = e.touches[0].clientX;
+  touchCurrentX.value = e.touches[0].clientX;
+};
+
+const handleTouchMove = (e) => {
+  e.preventDefault();
+  touchCurrentX.value = e.touches[0].clientX;
+  const deltaX = touchCurrentX.value - touchStartX.value;
+  
+  if (catchGameArea.value) {
+    const gameWidth = catchGameArea.value.offsetWidth;
+    basketX.value = Math.max(0, Math.min(gameWidth - BASKET_WIDTH, basketX.value + deltaX * 0.5));
+  }
+  
+  touchStartX.value = touchCurrentX.value;
+};
+
+const handleTouchEnd = () => {
+  touchStartX.value = 0;
+  touchCurrentX.value = 0;
+};
+
+// Arrow button handlers
+const startMovingLeft = () => {
+  keysPressed.value.ArrowLeft = true;
+};
+
+const startMovingRight = () => {
+  keysPressed.value.ArrowRight = true;
+};
+
+const stopMoving = () => {
+  keysPressed.value.ArrowLeft = false;
+  keysPressed.value.ArrowRight = false;
+};
+
+// ========== NAVIGATION ==========
+const selectGame = (game) => {
+  selectedGame.value = game;
+  if (game === 'memory') {
+    initMemory();
+  }
+};
+
+const backToMenu = () => {
+  stopCatchGame();
+  selectedGame.value = null;
+  catchGameStarted.value = false;
+  catchGameOver.value = false;
+  catchWon.value = false;
+  fallingItems.value = [];
+};
+
 const goBack = () => {
   router.push('/tamago');
 };
 
+// ========== LIFECYCLE ==========
 onMounted(async () => {
-  // Charger le pet actuel
   try {
     if (!petsStore.currentPet && petsStore.petsList.length === 0) {
       await petsStore.fetchPets({ limit: 1 });
@@ -235,11 +587,20 @@ onMounted(async () => {
     console.error('Error loading pet:', error);
   }
   
-  initGame();
+  // Event listeners pour le clavier
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+});
+
+onBeforeUnmount(() => {
+  stopCatchGame();
+  window.removeEventListener('keydown', handleKeyDown);
+  window.removeEventListener('keyup', handleKeyUp);
 });
 </script>
 
 <style module>
+/* ========== BASE ========== */
 .gamesPage {
   width: 100%;
   min-height: 100vh;
@@ -258,6 +619,105 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
   z-index: 0;
+}
+
+/* ========== MENU ========== */
+.gameMenu {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+.menuHeader {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+  width: 100%;
+}
+
+.menuTitle {
+  font-size: 64px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 12px;
+  text-shadow: 4px 4px 0 rgba(255, 255, 255, 0.5);
+}
+
+.menuSubtitle {
+  font-size: 24px;
+  color: #333;
+  margin: 0;
+}
+
+.gameCards {
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 800px;
+}
+
+.gameCard {
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 30px;
+  width: 250px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+}
+
+.gameCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+}
+
+.gameCard:active {
+  transform: translateY(-4px);
+}
+
+.gameIcon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.gameCardTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 8px;
+}
+
+.gameCardDesc {
+  font-size: 16px;
+  color: #555;
+  margin: 0 0 16px;
+}
+
+.gameCardCost {
+  display: flex;
+  gap: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+/* ========== GAME CONTAINER ========== */
+.gameContainer {
+  position: relative;
+  z-index: 1;
 }
 
 .header {
@@ -351,7 +811,8 @@ onMounted(async () => {
 }
 
 .resetButton,
-.playAgainButton {
+.playAgainButton,
+.startButton {
   padding: 12px 24px;
   background: linear-gradient(135deg, #6bcf7f 0%, #5ab36b 100%);
   border: 3px solid #000;
@@ -369,6 +830,12 @@ onMounted(async () => {
   animation: pulse 2s infinite;
 }
 
+.startButton {
+  font-size: 24px;
+  padding: 16px 48px;
+  margin-top: 20px;
+}
+
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
@@ -379,11 +846,13 @@ onMounted(async () => {
 }
 
 .resetButton:hover,
-.playAgainButton:hover {
+.playAgainButton:hover,
+.startButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* ========== MEMORY GAME ========== */
 .memoryGrid {
   position: relative;
   z-index: 1;
@@ -467,17 +936,138 @@ onMounted(async () => {
   object-fit: contain;
 }
 
-.winMessage {
+/* ========== CATCH GAME ========== */
+.catchStartScreen {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.catchInstructions {
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  border: 4px solid #000;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+}
+
+.catchInstructions h2 {
+  font-size: 32px;
+  margin: 0 0 20px;
+  color: #000;
+}
+
+.catchInstructions p {
+  font-size: 18px;
+  margin: 12px 0;
+  color: #333;
+}
+
+.catchGameArea {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 600px;
+  height: 500px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
+  border: 4px solid #000;
+  border-radius: 16px;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.fallingItem {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  transition: none;
+  pointer-events: none;
+}
+
+.fallingItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.basket {
+  position: absolute;
+  bottom: 20px;
+  width: 80px;
+  height: 80px;
+  transition: left 0.05s linear;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.basketImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.arrowControls {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 80px;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.arrowLeft,
+.arrowRight {
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  -webkit-user-select: none;
+  filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+.arrowLeft:hover,
+.arrowRight:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.arrowLeft:active,
+.arrowRight:active {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
+/* ========== WIN/LOSE MESSAGES ========== */
+.winMessage,
+.gameOverMessage {
   position: relative;
   z-index: 1;
   text-align: center;
   padding: 30px;
-  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
   border: 4px solid #000;
   border-radius: 16px;
   max-width: 500px;
   margin: 30px auto 0;
   animation: bounceIn 0.6s;
+}
+
+.winMessage {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffc107 100%);
+}
+
+.gameOverMessage {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
 }
 
 @keyframes bounceIn {
@@ -494,19 +1084,39 @@ onMounted(async () => {
   }
 }
 
-.winMessage h2 {
+.winMessage h2,
+.gameOverMessage h2 {
   font-size: 32px;
   margin: 0 0 12px;
   color: #000;
 }
 
-.winMessage p {
+.winMessage p,
+.gameOverMessage p {
   font-size: 20px;
-  margin: 0;
+  margin: 8px 0;
   color: #333;
 }
 
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
+  .menuTitle {
+    font-size: 48px;
+  }
+  
+  .menuSubtitle {
+    font-size: 18px;
+  }
+  
+  .gameCards {
+    gap: 20px;
+  }
+  
+  .gameCard {
+    width: 200px;
+    padding: 24px;
+  }
+  
   .title {
     font-size: 32px;
   }
@@ -532,6 +1142,10 @@ onMounted(async () => {
   .statValue {
     font-size: 24px;
   }
+  
+  .catchGameArea {
+    height: 400px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -543,6 +1157,23 @@ onMounted(async () => {
   .cardFront,
   .cardBack {
     border-width: 2px;
+  }
+  
+  .gameCard {
+    width: 160px;
+    padding: 20px;
+  }
+  
+  .gameIcon {
+    font-size: 48px;
+  }
+  
+  .gameCardTitle {
+    font-size: 22px;
+  }
+  
+  .catchGameArea {
+    height: 350px;
   }
 }
 </style>

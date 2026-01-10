@@ -50,17 +50,5 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
-// Port Render
-const port = process.env.PORT || 8989;
-
-// Lancer le serveur HTTP (et WebSocket si besoin)
-if (!process.env.JEST_WORKER_ID) {
-  httpServer.listen(port, () => console.log(`HTTP server listening on ${port}`));
-  // wsServer.start({ server: httpServer }); // décommente si tu as un wsServer
-}
-
-io.on('connection', (socket) => {
-  // Gérer la connexion WebSocket
-});
-
 export default app;
+export { httpServer };

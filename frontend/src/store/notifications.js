@@ -1,5 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import wsService from '../services/websocket';
+
+// Variable globale pour éviter les doublons d'écouteurs
+let listenersInitialized = false;
 
 export const useNotificationsStore = defineStore('notifications', () => {
   // State
@@ -19,6 +23,19 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   // Actions
   function addNotification(notification) {
+    // Vérifier si une notification identique existe déjà (même message + même petId + moins de 2 secondes)
+    const now = Date.now();
+    const isDuplicate = notifications.value.some(n => {
+      const timeDiff = now - new Date(n.timestamp).getTime();
+      return n.message === notification.message && 
+             n.petId === notification.petId && 
+             timeDiff < 2000; // Moins de 2 secondes
+    });
+    
+    if (isDuplicate) {
+      return null;
+    }
+    
     const newNotif = {
       id: Date.now() + Math.random(),
       timestamp: new Date(),
@@ -103,6 +120,23 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
     return false;
   }
+
+  // Écouter les notifications WebSocket en temps réel
+  function setupWebSocketListeners() {
+    // N'enregistrer les écouteurs qu'une seule fois
+    if (listenersInitialized) {
+      return;
+    }
+    
+    wsService.on('notification:new', (data) => {
+      addNotification(data);
+    });
+    
+    listenersInitialized = true;
+  }
+
+  // Initialiser les écouteurs au chargement du store
+  setupWebSocketListeners();
 
   return {
     // State

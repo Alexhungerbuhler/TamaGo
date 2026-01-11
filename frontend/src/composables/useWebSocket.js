@@ -103,43 +103,9 @@ export function usePetUpdates() {
  */
 export function usePetNotifications() {
   const notifications = ref([]);
-  
-  const handleAlert = (data) => {
-    notifications.value.push({
-      ...data,
-      level: 'warning',
-      timestamp: new Date()
-    });
-  };
-
-  const handleCritical = (data) => {
-    notifications.value.push({
-      ...data,
-      level: 'critical',
-      timestamp: new Date()
-    });
-  };
-
-  const unsubscribeAlert = wsService.on('pet:alert', handleAlert);
-  const unsubscribeCritical = wsService.on('pet:critical', handleCritical);
-
-  onUnmounted(() => {
-    unsubscribeAlert();
-    unsubscribeCritical();
-  });
-
-  const clearNotifications = () => {
-    notifications.value = [];
-  };
-
-  const removeNotification = (index) => {
-    notifications.value.splice(index, 1);
-  };
 
   return {
-    notifications,
-    clearNotifications,
-    removeNotification
+    notifications
   };
 }
 

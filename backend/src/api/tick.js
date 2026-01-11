@@ -1,5 +1,6 @@
 import Tamagotchi from "../models/Tamagotchi.js";
 import { emitToUser } from "../websocket.js";
+import notificationService from "../services/notificationService.js";
 
 const clamp = (value) => Math.max(0, Math.min(100, value));
 
@@ -43,21 +44,11 @@ export async function executeTick() {
           }
         });
 
-        // Vérifier les alertes critiques
-        if (pet.hunger < 25 || pet.hygiene < 25 || pet.energy < 25 || pet.fun < 25) {
-          const criticalStats = [];
-          if (pet.hunger < 25) criticalStats.push('Hunger');
-          if (pet.hygiene < 25) criticalStats.push('Hygiene');
-          if (pet.energy < 25) criticalStats.push('Energy');
-          if (pet.fun < 25) criticalStats.push('Fun');
-
-          emitToUser(pet.owner._id.toString(), 'pet:alert', {
-            petId: pet._id,
-            name: pet.name,
-            type: criticalStats.join(', '),
-            message: `⚠️ ${pet.name} needs attention! Low ${criticalStats.join(', ')}`
-          });
-        }
+        // Analyser les stats et envoyer des notifications si nécessaire
+        const notifications = notificationService.analyzeStats(pet, oldStats);
+        notifications.forEach(notification => {
+          emitToUser(pet.owner._id.toString(), 'notification:new', notification);
+        });
       }
     }
 

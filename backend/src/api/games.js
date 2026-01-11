@@ -1,5 +1,6 @@
 import Tamagotchi from "../models/Tamagotchi.js";
 import { emitToUser } from "../websocket.js";
+import notificationService from "../services/notificationService.js";
 
 const MAX_STAT = 100;
 const MIN_STAT = 0;
@@ -133,7 +134,8 @@ export async function playGame(req, res, next) {
     const oldStats = {
       fun: pet.fun,
       energy: pet.energy,
-      hunger: pet.hunger
+      hunger: pet.hunger,
+      hygiene: pet.hygiene
     };
     
     pet.fun = clamp(pet.fun + funBonus);
@@ -152,6 +154,12 @@ export async function playGame(req, res, next) {
           hunger: pet.hunger,
           hygiene: pet.hygiene
         }
+      });
+      
+      // Vérifier si des notifications de seuil doivent être envoyées
+      const notifications = notificationService.analyzeStats(pet, oldStats);
+      notifications.forEach(notification => {
+        emitToUser(req.user.id, "notification:new", notification);
       });
       
       // Notification de jeu terminé

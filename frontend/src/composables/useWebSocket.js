@@ -238,22 +238,30 @@ export function useNearbyPets() {
   const unsubscribeMoved = wsService.on('pet:moved', handlePetMoved);
 
   const startWatchingLocation = (radius = 1000) => {
+    console.log('📍 startWatchingLocation called with radius:', radius);
+    
     if (!navigator.geolocation) {
       locationError.value = 'Geolocation not supported';
+      console.error('❌ Geolocation not supported');
       return;
     }
 
+    console.log('📍 Requesting geolocation...');
+    
     watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
+        console.log('📍 Geolocation received:', { latitude, longitude });
         currentLocation.value = { latitude, longitude };
         
         // Rejoindre la zone géographique
+        console.log('📍 Sending location:join to WebSocket...');
         wsService.joinLocation({ latitude, longitude, radius });
         isWatchingLocation.value = true;
         locationError.value = null;
       },
       (error) => {
+        console.error('❌ Geolocation error:', error);
         locationError.value = error.message;
         isWatchingLocation.value = false;
       },

@@ -242,7 +242,7 @@ Real-time updates are displayed in the NotificationsPanel component.
 Projet réalisé dans le cadre des cours **ArchiOWeb** et **DevMob** à la HEIG-VD.
 
 **Développement:**
-- Joshua
-- Cédric
-- Alexandre
+- [Joshua](https://github.com/JoshuaAbes)
+- [Cédric](https://github.com/CedrBarto)
+- [Alexandre](https://github.com/Alexhungerbuhler)
 

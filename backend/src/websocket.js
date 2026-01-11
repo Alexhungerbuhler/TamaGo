@@ -11,9 +11,15 @@ let io;
 const connectedUsers = new Map();
 
 export function initializeWebSocket(httpServer) {
+  // CORS configuration
+  // Dev: Frontend on localhost:5173, Backend on localhost:3000
+  // Render: Frontend on render domain with port 443 (HTTPS), Backend on port 10000
+  // CORS_ORIGIN can be overridden via environment variable
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+  
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+      origin: corsOrigin,
       methods: ['GET', 'POST'],
       credentials: true
     }

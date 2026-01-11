@@ -87,7 +87,11 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useNearbyPets, useOnlineUsers } from '../composables/useWebSocket';
 import { useRouter } from 'vue-router';
 
+console.log('📍 MapView.vue script starting...');
+
 const router = useRouter();
+console.log('📍 Router imported');
+
 const {
   currentLocation,
   isWatchingLocation,
@@ -95,35 +99,41 @@ const {
   startWatchingLocation,
   stopWatchingLocation
 } = useNearbyPets();
+console.log('📍 useNearbyPets imported successfully');
 
 const { getOnlineUsersList } = useOnlineUsers();
+console.log('📍 useOnlineUsers imported successfully');
 
 const selectedUser = ref(null);
 const showPermissionModal = ref(true);
+console.log('📍 Refs created');
 
 function requestLocationPermission() {
+  console.log('📍 requestLocationPermission called');
   showPermissionModal.value = false;
   startWatchingLocation(1000);
 }
 
 function rejectLocationPermission() {
+  console.log('📍 rejectLocationPermission called');
   showPermissionModal.value = false;
   router.push('/tamago');
 }
 
 function startTracking() {
+  console.log('📍 startTracking called');
   showPermissionModal.value = false;
   startWatchingLocation(1000);
 }
 
 function goBack() {
+  console.log('📍 goBack called');
   stopWatchingLocation();
   router.push('/tamago');
 }
 
-// Fonction pour calculer la distance entre deux points (Haversine formula)
 function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371000; // Rayon de la Terre en mètres
+  const R = 6371000;
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -137,13 +147,16 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-// Fonction pour obtenir la liste des utilisateurs avec les distances calculées
 function getUsersWithDistance() {
+  console.log('📍 getUsersWithDistance called, currentLocation:', currentLocation.value);
   if (!currentLocation.value) {
     return [];
   }
 
-  return getOnlineUsersList()
+  const users = getOnlineUsersList();
+  console.log('📍 Online users:', users.length);
+
+  return users
     .map(user => ({
       ...user,
       distance: calculateDistance(
@@ -157,13 +170,17 @@ function getUsersWithDistance() {
 }
 
 onMounted(() => {
-  showPermissionModal.value = true;
   console.log('📍 MapView mounted - waiting for location permission');
+  showPermissionModal.value = true;
 });
 
 onUnmounted(() => {
+  console.log('📍 MapView unmounted');
   stopWatchingLocation();
 });
+
+console.log('📍 MapView.vue script loaded successfully');
+
 </script>
 
 <style scoped>

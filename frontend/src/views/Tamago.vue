@@ -776,15 +776,27 @@ onMounted(async () => {
       await petsStore.fetchPet(existingPet._id);
       console.log('Current pet loaded:', petsStore.currentPet);
       
-      // Charger l'image sauvegardée ou en générer une nouvelle
-      const savedImage = localStorage.getItem(`hatched_pet_image_${existingPet._id}`);
-      if (savedImage) {
-        hatchedPetImage.value = savedImage;
-        console.log('Loaded saved pet image:', savedImage);
-      } else {
-        hatchedPetImage.value = getRandomPet();
+      // Charger l'image depuis la base de données en priorité
+      if (existingPet.imageUrl) {
+        hatchedPetImage.value = existingPet.imageUrl;
+        console.log('Loaded pet image from database:', existingPet.imageUrl);
+        // Synchroniser le localStorage avec la BDD
         saveHatchedPet(existingPet._id);
-        console.log('Generated new pet image:', hatchedPetImage.value);
+      } else {
+        // Fallback: vérifier le localStorage si pas d'image en BDD
+        const savedImage = localStorage.getItem(`hatched_pet_image_${existingPet._id}`);
+        if (savedImage) {
+          hatchedPetImage.value = savedImage;
+          console.log('Loaded saved pet image from localStorage:', savedImage);
+          // Sauvegarder en BDD pour la prochaine fois
+          await petsStore.updatePet(existingPet._id, { imageUrl: savedImage });
+        } else {
+          // Générer une nouvelle image si aucune n'existe
+          hatchedPetImage.value = getRandomPet();
+          saveHatchedPet(existingPet._id);
+          await petsStore.updatePet(existingPet._id, { imageUrl: hatchedPetImage.value });
+          console.log('Generated new pet image:', hatchedPetImage.value);
+        }
       }
       
       // Marquer l'œuf comme éclos et afficher le pet

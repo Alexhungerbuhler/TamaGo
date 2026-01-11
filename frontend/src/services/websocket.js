@@ -5,6 +5,7 @@ class WebSocketService {
     this.socket = null;
     this.isConnected = false;
     this.listeners = new Map();
+    this.listenersConfigured = false; // Flag pour configurer les listeners une seule fois
   }
 
   /**
@@ -71,8 +72,11 @@ class WebSocketService {
       this.emit('connection:error', error);
     });
 
-    // Événements du serveur
-    this.setupServerListeners();
+    // Événements du serveur - configurer une seule fois
+    if (!this.listenersConfigured) {
+      this.setupServerListeners();
+      this.listenersConfigured = true;
+    }
   }
 
   /**
@@ -109,13 +113,9 @@ class WebSocketService {
       this.emit('pet:moved', data);
     });
 
-    // Alertes
-    this.socket.on('pet:alert', (data) => {
-      this.emit('pet:alert', data);
-    });
-
-    this.socket.on('pet:critical', (data) => {
-      this.emit('pet:critical', data);
+    // Notifications push
+    this.socket.on('notification:new', (data) => {
+      this.emit('notification:new', data);
     });
 
     // Localisation

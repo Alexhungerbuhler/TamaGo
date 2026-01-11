@@ -21,8 +21,6 @@ export const usePetsStore = defineStore('pets', () => {
 
   // WebSocket listeners
   let unsubscribeUpdate;
-  let unsubscribeAlert;
-  let unsubscribeCritical;
 
   // Initialiser les écouteurs WebSocket
   function initWebSocketListeners() {
@@ -30,34 +28,11 @@ export const usePetsStore = defineStore('pets', () => {
     unsubscribeUpdate = wsService.on('pet:updated', (data) => {
       updatePetStats(data.petId, data.stats);
     });
-
-    // Alertes
-    unsubscribeAlert = wsService.on('pet:alert', (data) => {
-      notificationsStore.addNotification({
-        title: `⚠️ ${data.name}`,
-        message: data.message,
-        level: 'warning',
-        type: data.type,
-        petId: data.petId
-      });
-    });
-
-    unsubscribeCritical = wsService.on('pet:critical', (data) => {
-      notificationsStore.addNotification({
-        title: `🚨 ${data.name}`,
-        message: data.message,
-        level: 'critical',
-        type: 'health',
-        petId: data.petId
-      });
-    });
   }
 
   // Nettoyer les écouteurs
   function cleanupWebSocketListeners() {
     if (unsubscribeUpdate) unsubscribeUpdate();
-    if (unsubscribeAlert) unsubscribeAlert();
-    if (unsubscribeCritical) unsubscribeCritical();
   }
 
   // Mettre à jour les stats d'un pet

@@ -236,37 +236,6 @@ export function initializeWebSocket(httpServer) {
     }
   }, 300000); // Toutes les 5 minutes (300 secondes)
 
-  // Fonction pour vérifier périodiquement la santé des pets
-  setInterval(async () => {
-    try {
-      const criticalPets = await Tamagotchi.find({
-        $or: [
-          { health: { $lt: 20 } },
-          { hunger: { $gt: 80 } },
-          { happiness: { $lt: 20 } }
-        ]
-      }).populate('owner').exec();
-
-      for (const pet of criticalPets) {
-        const userConnection = connectedUsers.get(pet.owner._id.toString());
-        if (userConnection) {
-          io.to(`user:${pet.owner._id}`).emit('pet:critical', {
-            petId: pet._id,
-            name: pet.name,
-            message: `🚨 ${pet.name} is in critical condition!`,
-            stats: {
-              health: pet.health,
-              hunger: pet.hunger,
-              happiness: pet.happiness
-            }
-          });
-        }
-      }
-    } catch (err) {
-      console.error('Error checking pet health:', err);
-    }
-  }, 60000); // Toutes les minutes
-
   return io;
 }
 

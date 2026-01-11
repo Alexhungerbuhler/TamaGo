@@ -131,7 +131,11 @@
         </div>
         <div :class="$style.statBox">
           <span :class="$style.statLabel">Goal</span>
-          <span :class="$style.statValue">{{ CATCH_WIN_SCORE }}</span>
+          <span :class="$style.statValue">{{ catchCurrentGoal }}</span>
+        </div>
+        <div :class="$style.statBox">
+          <span :class="$style.statLabel">Record</span>
+          <span :class="$style.statValue">{{ catchRecord }}</span>
         </div>
       </div>
       
@@ -141,8 +145,9 @@
       >
         <div :class="$style.catchInstructions">
           <h2>How to Play</h2>
-          <p>Catch {{ CATCH_WIN_SCORE }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
+          <p>Catch {{ catchCurrentGoal }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
           <p>Use Arrow Keys or Touch to move the basket</p>
+          <p v-if="catchRecord > 0" style="color: #ffd93d; font-weight: 700; margin-top: 12px;">Your Record: {{ catchRecord }}</p>
           <button :class="$style.startButton" @click="startCatchGame">
             Start Game
           </button>
@@ -207,17 +212,20 @@
       <div v-if="catchGameOver && !catchWon" :class="$style.gameOverMessage">
         <h2>Time's Up!</h2>
         <p>You caught {{ catchScore }} Tamagotchis</p>
-        <p>You needed {{ CATCH_WIN_SCORE }} to win</p>
-        <button :class="$style.playAgainButton" @click="backToMenu">
-          Back to Menu
+        <p>You needed {{ catchCurrentGoal - (catchWon ? 1 : 0) }} to win</p>
+        <p v-if="catchRecord > 0" style="margin-top: 12px; color: #ffd93d; font-weight: 700;">Record: {{ catchRecord }}</p>
+        <button :class="$style.playAgainButton" @click="resetCatchGame">
+          Play Again
         </button>
       </div>
       
       <div v-if="catchWon" :class="$style.winMessage">
         <h2>Victory!</h2>
         <p>You caught {{ catchScore }} Tamagotchis!</p>
-        <button :class="$style.playAgainButton" @click="backToMenu">
-          Back to Menu
+        <p style="margin-top: 8px; font-size: 18px;">Next Goal: {{ catchCurrentGoal }}</p>
+        <p v-if="catchRecord > 0" style="margin-top: 8px; color: #2d7a4d; font-weight: 700;">Record: {{ catchRecord }}</p>
+        <button :class="$style.playAgainButton" @click="resetCatchGame">
+          Play Again
         </button>
       </div>
     </div>
@@ -286,16 +294,16 @@
         <h2>Wrong Sequence!</h2>
         <p>You reached round {{ simonRound }}</p>
         <p>Try again to reach round 10!</p>
-        <button :class="$style.playAgainButton" @click="backToMenu">
-          Back to Menu
+        <button :class="$style.playAgainButton" @click="resetSimonGame">
+          Play Again
         </button>
       </div>
       
       <div v-if="simonWon" :class="$style.winMessage">
         <h2>Perfect!</h2>
         <p>You completed all 10 rounds!</p>
-        <button :class="$style.playAgainButton" @click="backToMenu">
-          Back to Menu
+        <button :class="$style.playAgainButton" @click="resetSimonGame">
+          Play Again
         </button>
       </div>
     </div>
@@ -345,8 +353,7 @@ const tamagotchis = [
   { id: 3, name: 'Goutte', image: '/Pets/goute 1.png' },
   { id: 4, name: 'Mystère', image: '/Pets/jspcestquoi.png' },
   { id: 5, name: 'Raichu', image: '/Pets/raichu.png' },
-  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.png' },
-  { id: 7, name: 'Tortue Pierre', image: '/Pets/tortuepierre 1.png' }
+  { id: 6, name: 'Renard', image: '/Pets/renarddelumiere 1.png' }
 ];
 
 // ========== MEMORY GAME ==========
@@ -454,13 +461,26 @@ watch(memoryWon, async (newVal) => {
 
 // ========== CATCH GAME ==========
 const CATCH_DURATION = 30; // secondes
-const CATCH_WIN_SCORE = 15; // score à atteindre
 const CATCH_SPAWN_INTERVAL = 800; // millisecondes
 const FALL_SPEED = 2; // pixels par frame (base speed)
 const FALL_SPEED_MAX = 4; // pixels par frame (max random speed for difficulty)
 const BASKET_SPEED = 8; // pixels par frame
 const BASKET_WIDTH = 80;
 const ITEM_SIZE = 50;
+
+// Charger le goal et le record depuis localStorage
+const loadCatchGameProgress = () => {
+  const savedGoal = localStorage.getItem('catchGame_currentGoal');
+  const savedRecord = localStorage.getItem('catchGame_record');
+  return {
+    currentGoal: savedGoal ? parseInt(savedGoal) : 15,
+    record: savedRecord ? parseInt(savedRecord) : 0
+  };
+};
+
+const catchGameProgress = loadCatchGameProgress();
+const catchCurrentGoal = ref(catchGameProgress.currentGoal);
+const catchRecord = ref(catchGameProgress.record);
 
 const catchGameArea = ref(null);
 const catchScore = ref(0);
@@ -563,7 +583,7 @@ const updateCatchGame = () => {
       catchScore.value++;
       
       // Vérifier victoire
-      if (catchScore.value >= CATCH_WIN_SCORE) {
+      if (catchScore.value >= catchCurrentGoal.value) {
         winCatchGame();
       }
       
@@ -594,6 +614,18 @@ const winCatchGame = async () => {
   catchWon.value = true;
   stopCatchGame();
   
+  // Mettre à jour le record si nécessaire
+  if (catchScore.value > catchRecord.value) {
+    catchRecord.value = catchScore.value;
+    localStorage.setItem('catchGame_record', catchRecord.value.toString());
+    console.log('🏆 New Record:', catchRecord.value);
+  }
+  
+  // Augmenter le goal pour la prochaine partie
+  catchCurrentGoal.value++;
+  localStorage.setItem('catchGame_currentGoal', catchCurrentGoal.value.toString());
+  console.log('📈 Next Goal:', catchCurrentGoal.value);
+  
   // Récompenses
   if (currentPet.value) {
     try {
@@ -621,6 +653,20 @@ const stopCatchGame = () => {
   if (catchSpawnLoop) clearInterval(catchSpawnLoop);
   if (catchTimerLoop) clearInterval(catchTimerLoop);
   if (catchGameLoop) cancelAnimationFrame(catchGameLoop);
+};
+
+const resetCatchGame = () => {
+  stopCatchGame();
+  catchGameStarted.value = false;
+  catchGameOver.value = false;
+  catchWon.value = false;
+  catchScore.value = 0;
+  catchTimeLeft.value = CATCH_DURATION;
+  fallingItems.value = [];
+  // Relancer le jeu après un court délai
+  setTimeout(() => {
+    startCatchGame();
+  }, 100);
 };
 
 const handleKeyDown = (e) => {
@@ -799,6 +845,22 @@ const winSimonGame = async () => {
       console.error('❌ Error updating stats:', error);
     }
   }
+};
+
+const resetSimonGame = () => {
+  simonGameStarted.value = false;
+  simonGameOver.value = false;
+  simonWon.value = false;
+  simonRound.value = 0;
+  simonSequence.value = [];
+  simonPlayerSequence.value = [];
+  simonPlayerTurn.value = false;
+  simonActiveTama.value = -1;
+  simonStatus.value = 'Watch';
+  // Relancer le jeu après un court délai
+  setTimeout(() => {
+    startSimonGame();
+  }, 100);
 };
 
 // ========== NAVIGATION ==========

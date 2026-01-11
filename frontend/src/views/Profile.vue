@@ -140,8 +140,9 @@ import { usePetsStore } from '@/store/pets'
 
 const authStore = useAuthStore()
 const petsStore = usePetsStore()
-const user = authStore.currentUser
+const user = ref(null)
 const petStats = ref(null)
+const petImage = ref(null)
 const router = useRouter()
 
 // Rename modal state
@@ -153,14 +154,6 @@ const renameInput = ref(null)
 
 // Get current pet
 const currentPet = computed(() => petsStore.currentPet)
-
-// Get pet image from localStorage
-const petImage = computed(() => {
-  if (!currentPet.value) return null
-  const petId = currentPet.value._id || currentPet.value.id
-  if (!petId) return null
-  return localStorage.getItem(`hatched_pet_image_${petId}`)
-})
 
 // Validation du nouveau nom
 const isRenameValid = computed(() => {
@@ -239,14 +232,47 @@ watch(showRenameModal, async (newVal) => {
 })
 
 onMounted(async () => {
-  // Load pet stats
-  if (currentPet.value) {
-    try {
-      const petId = currentPet.value._id || currentPet.value.id
-      petStats.value = await petsStore.fetchPetStats(petId)
-    } catch (error) {
-      console.error('Error fetching pet stats:', error)
+  try {
+    // Charger l'utilisateur connecté
+    user.value = authStore.currentUser;
+    if (!user.value) {
+      console.log('[Profile] No user in store, checking auth...');
+      await authStore.checkAuth();
+      user.value = authStore.currentUser;
     }
+    console.log('[Profile] User loaded:', user.value?.name);
+    
+    // Si pas de pet chargé dans le store, récupérer le premier pet de l'utilisateur
+    if (!currentPet.value) {
+      console.log('[Profile] No current pet, fetching pets...');
+      await petsStore.fetchPets();
+      
+      // Si on a des pets, charger le premier
+      if (petsStore.pets.length > 0) {
+        const firstPet = petsStore.pets[0];
+        const petId = firstPet._id || firstPet.id;
+        await petsStore.fetchPet(petId);
+        console.log('[Profile] Loaded pet:', currentPet.value?.name, petId);
+      }
+    }
+    
+    // Load pet stats
+    if (currentPet.value) {
+      const petId = currentPet.value._id || currentPet.value.id;
+      console.log('[Profile] Fetching stats for pet:', petId);
+      
+      // Charger l'image du pet depuis la BDD
+      petImage.value = currentPet.value.imageUrl || null;
+      console.log('[Profile] Pet image from database:', petImage.value);
+      
+      // Charger les stats du pet
+      petStats.value = await petsStore.fetchPetStats(petId);
+      console.log('[Profile] Loaded pet stats:', petStats.value);
+    } else {
+      console.log('[Profile] No pet found to load stats');
+    }
+  } catch (error) {
+    console.error('[Profile] Error loading pet data:', error);
   }
 })
 </script>

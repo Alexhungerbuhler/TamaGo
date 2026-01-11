@@ -92,6 +92,33 @@
       :isOpen="showNamePetModal" 
       @submit="handlePetNameSubmit"
     />
+
+    <!-- Modal de mort du Tamagotchi -->
+    <div v-if="showDeathModal" :class="$style.modalOverlay">
+      <div :class="$style.modalContainer">
+        <div :class="$style.modalContent">
+          <h2 :class="$style.modalTitle">
+            <img src="/icons/TriangleWarningIcon.svg" :class="$style.titleWarningIcon" alt="warning">
+            Your Tamagotchi Died!
+          </h2>
+          <p :class="$style.modalWarning">
+            Both Hunger and Hygiene reached 0. Your Tamagotchi couldn't survive...
+          </p>
+          <p :class="$style.modalInfo">
+            You must start a new game to continue.
+          </p>
+
+          <div :class="$style.modalButtons">
+            <button 
+              :class="$style.btnConfirm"
+              @click="handleStartNewGame"
+            >
+              Start New Game
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -111,6 +138,7 @@ const currentPet = computed(() => petsStore.currentPet);
 
 // Modal state
 const showNamePetModal = ref(false);
+const showDeathModal = ref(false);
 
 // Permission state for iOS
 const needsPermission = ref(false);
@@ -131,6 +159,9 @@ const petMovementInterval = ref(null);
 // Animation system - for eating and other pet actions
 const isAnimating = ref(false);
 const currentAnimationFrame = ref(null);
+
+// Track if pet data is initialized (to avoid counting poops on page load)
+const isPetInitialized = ref(false);
 
 // Animation frames mapping for each pet type
 const animationFrames = {
@@ -188,8 +219,15 @@ const nbPoops = computed(() => {
 
 // Watcher pour détecter l'apparition d'un poop et incrémenter le compteur
 watch(nbPoops, async (newCount, oldCount) => {
+  // Ne pas incrémenter au premier chargement de la page
+  if (!isPetInitialized.value) {
+    isPetInitialized.value = true;
+    return;
+  }
+  
   // Incrémenter seulement si le nombre de poops augmente (pas quand ils diminuent)
-  if (newCount > oldCount && currentPet.value?._id) {
+  // Et ne pas incrémenter si hygiene est déjà à 0 (le 4ème poop est déjà compté)
+  if (newCount > oldCount && currentPet.value?._id && currentPet.value.hygiene > 0) {
     try {
       await petsStore.incrementPoops(currentPet.value._id);
       console.log('💩 Poop counter incremented! Total:', newCount);
@@ -198,6 +236,16 @@ watch(nbPoops, async (newCount, oldCount) => {
     }
   }
 });
+
+// Watcher pour détecter la mort du Tamagotchi (hunger ET hygiene à 0)
+watch(currentPet, (newPet) => {
+  if (newPet && newPet.hunger === 0 && newPet.hygiene === 0 && !showDeathModal.value) {
+    console.log('☠️ Tamagotchi died! Hunger and Hygiene both at 0');
+    showDeathModal.value = true;
+    // Arrêter le mouvement du pet
+    stopPetMovement();
+  }
+}, { deep: true });
 
 const poopsPositions = computed(() => {
   const positions = [];
@@ -323,13 +371,13 @@ const hatchEgg = async () => {
       console.log('[hatchEgg] Pet already exists, loading:', petsStore.petsList[0]);
       const existingPet = petsStore.petsList[0];
       
-      // Charger l'image sauvegardée ou en générer une nouvelle
-      const savedImage = localStorage.getItem(`hatched_pet_image_${existingPet._id}`);
-      if (savedImage) {
-        hatchedPetImage.value = savedImage;
+      // Charger l'image depuis le pet (BDD) ou générer une nouvelle
+      if (existingPet.imageUrl) {
+        hatchedPetImage.value = existingPet.imageUrl;
       } else {
+        // Générer et sauvegarder une nouvelle image
         hatchedPetImage.value = getRandomPet();
-        saveHatchedPet(existingPet._id);
+        await petsStore.updatePet(existingPet._id, { imageUrl: hatchedPetImage.value });
       }
       
       await petsStore.fetchPet(existingPet._id);
@@ -350,11 +398,12 @@ const handlePetNameSubmit = async (petName) => {
   console.log('[handlePetNameSubmit] Creating pet with name:', petName);
   
   try {
-    // Create the pet with the given name
+    // Create the pet with the given name and image
     const newPet = await petsStore.createPet({
       name: petName,
       lat: 0,
-      lng: 0
+      lng: 0,
+      imageUrl: hatchedPetImage.value
     });
     console.log('[handlePetNameSubmit] Pet created successfully:', newPet);
     
@@ -376,6 +425,33 @@ const handlePetNameSubmit = async (petName) => {
   } catch (error) {
     console.error('[handlePetNameSubmit] Error creating pet:', error);
     // Keep modal open on error so user can try again
+  }
+};
+
+// Handle start new game after death
+const handleStartNewGame = async () => {
+  console.log('[handleStartNewGame] Starting new game after death...');
+  
+  try {
+    const petId = currentPet.value?._id;
+    if (petId) {
+      // Supprimer le pet mort
+      await petsStore.deletePet(petId);
+      console.log('[handleStartNewGame] Dead pet deleted');
+      
+      // Nettoyer le localStorage pour ce pet
+      localStorage.removeItem(`hatched_pet_image_${petId}`);
+    }
+    
+    // Fermer la modal
+    showDeathModal.value = false;
+    
+    // Réinitialiser l'état
+    resetEgg();
+    
+    console.log('[handleStartNewGame] Ready to hatch a new pet!');
+  } catch (error) {
+    console.error('[handleStartNewGame] Error starting new game:', error);
   }
 };
 
@@ -1486,5 +1562,122 @@ const requestMotionPermission = async () => {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* ========== MODAL STYLES ========== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContainer {
+  width: 90%;
+  max-width: 450px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: #ffffff;
+  padding: 2rem;
+  border: 5px solid #000000;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.titleWarningIcon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.modalWarning {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: #D5230C;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modalInfo {
+  margin: 0 0 2rem;
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btnConfirm {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 4px solid #000000;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Pixelify Sans', monospace;
+  transition: all 0.2s;
+  background: #E06264;
+  color: #ffffff;
+}
+
+.btnConfirm:hover {
+  background: #c74f51;
+  transform: translateY(-2px);
+}
+
+.btnConfirm:active {
+  transform: translateY(0);
 }
 </style>

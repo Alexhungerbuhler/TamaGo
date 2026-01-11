@@ -81,7 +81,7 @@ export async function createPet(req, res, next) {
       return res.status(401).send("Authentication required");
     }
     
-    const { name, lat, lng } = req.body;
+    const { name, lat, lng, imageUrl } = req.body;
     if (!name) {
       return res.status(400).send("name is required");
     }
@@ -90,6 +90,7 @@ export async function createPet(req, res, next) {
     const pet = await new Tamagotchi({
       name,
       owner: req.user._id,
+      imageUrl: imageUrl || null,
       location: {
         type: "Point",
         coordinates: [

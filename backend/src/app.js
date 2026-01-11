@@ -50,7 +50,7 @@ app.use((req, res) => {
 });
 
 // Port Render
-const port = process.env.BACKEND_PORT || 8989;
+const port = process.env.PORT || 8989;
 
 // Lancer le serveur HTTP (et WebSocket si besoin)
 if (!process.env.JEST_WORKER_ID) {

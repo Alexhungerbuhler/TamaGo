@@ -134,7 +134,7 @@
           <span :class="$style.statValue">{{ catchCurrentGoal }}</span>
         </div>
         <div :class="$style.statBox">
-          <span :class="$style.statLabel">Record</span>
+          <span :class="$style.statLabel">Best</span>
           <span :class="$style.statValue">{{ catchRecord }}</span>
         </div>
       </div>
@@ -147,7 +147,7 @@
           <h2>How to Play</h2>
           <p>Catch {{ catchCurrentGoal }} Tamagotchis in {{ CATCH_DURATION }}s to win!</p>
           <p>Use Arrow Keys or Touch to move the basket</p>
-          <p v-if="catchRecord > 0" style="color: #ffd93d; font-weight: 700; margin-top: 12px;">Your Record: {{ catchRecord }}</p>
+          <p v-if="catchRecord > 0" style="color: #ffd93d; font-weight: 700; margin-top: 12px;">Your Best: {{ catchRecord }}</p>
           <button :class="$style.startButton" @click="startCatchGame">
             Start Game
           </button>
@@ -213,7 +213,7 @@
         <h2>Time's Up!</h2>
         <p>You caught {{ catchScore }} Tamagotchis</p>
         <p>You needed {{ catchCurrentGoal - (catchWon ? 1 : 0) }} to win</p>
-        <p v-if="catchRecord > 0" style="margin-top: 12px; color: #ffd93d; font-weight: 700;">Record: {{ catchRecord }}</p>
+        <p v-if="catchRecord > 0" style="margin-top: 12px; color: #ffd93d; font-weight: 700;">Best: {{ catchRecord }}</p>
         <button :class="$style.playAgainButton" @click="resetCatchGame">
           Play Again
         </button>
@@ -223,7 +223,7 @@
         <h2>Victory!</h2>
         <p>You caught {{ catchScore }} Tamagotchis!</p>
         <p style="margin-top: 8px; font-size: 18px;">Next Goal: {{ catchCurrentGoal }}</p>
-        <p v-if="catchRecord > 0" style="margin-top: 8px; color: #2d7a4d; font-weight: 700;">Record: {{ catchRecord }}</p>
+        <p v-if="catchRecord > 0" style="margin-top: 8px; color: #2d7a4d; font-weight: 700;">Best: {{ catchRecord }}</p>
         <button :class="$style.playAgainButton" @click="resetCatchGame">
           Play Again
         </button>
@@ -468,10 +468,14 @@ const BASKET_SPEED = 8; // pixels par frame
 const BASKET_WIDTH = 80;
 const ITEM_SIZE = 50;
 
-// Charger le goal et le record depuis localStorage
+// Charger le goal et le record depuis localStorage pour le pet actuel
 const loadCatchGameProgress = () => {
-  const savedGoal = localStorage.getItem('catchGame_currentGoal');
-  const savedRecord = localStorage.getItem('catchGame_record');
+  const petId = currentPet.value?._id || currentPet.value?.id;
+  if (!petId) {
+    return { currentGoal: 15, record: 0 };
+  }
+  const savedGoal = localStorage.getItem(`catchGame_currentGoal_${petId}`);
+  const savedRecord = localStorage.getItem(`catchGame_record_${petId}`);
   return {
     currentGoal: savedGoal ? parseInt(savedGoal) : 15,
     record: savedRecord ? parseInt(savedRecord) : 0
@@ -615,15 +619,20 @@ const winCatchGame = async () => {
   stopCatchGame();
   
   // Mettre à jour le record si nécessaire
+  const petId = currentPet.value?._id || currentPet.value?.id;
   if (catchScore.value > catchRecord.value) {
     catchRecord.value = catchScore.value;
-    localStorage.setItem('catchGame_record', catchRecord.value.toString());
-    console.log('🏆 New Record:', catchRecord.value);
+    if (petId) {
+      localStorage.setItem(`catchGame_record_${petId}`, catchRecord.value.toString());
+    }
+    console.log('🏆 New Best:', catchRecord.value);
   }
   
   // Augmenter le goal pour la prochaine partie
   catchCurrentGoal.value++;
-  localStorage.setItem('catchGame_currentGoal', catchCurrentGoal.value.toString());
+  if (petId) {
+    localStorage.setItem(`catchGame_currentGoal_${petId}`, catchCurrentGoal.value.toString());
+  }
   console.log('📈 Next Goal:', catchCurrentGoal.value);
   
   // Récompenses

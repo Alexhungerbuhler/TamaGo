@@ -27,6 +27,7 @@ export async function executeTick() {
       pet.hunger = clamp(pet.hunger - 25);   // -25 toutes les 5 minutes
       pet.hygiene = clamp(pet.hygiene - 25); // -25 toutes les 5 minutes
       // Energy ne diminue PAS automatiquement, seulement via les games
+      // pet.energy reste inchangé ici
       pet.fun = clamp(pet.fun - 25);         // -25 toutes les 5 minutes
       
       await pet.save();

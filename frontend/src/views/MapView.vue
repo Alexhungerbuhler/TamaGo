@@ -193,6 +193,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 120px;
 }
 
 .btn-back {
@@ -240,6 +241,9 @@ onUnmounted(() => {
   font-size: 0.8rem;
   margin-top: 0.5rem;
   display: inline-block;
+  min-height: 32px;
+  opacity: 1;
+  transition: opacity 0.3s;
 }
 
 .content {

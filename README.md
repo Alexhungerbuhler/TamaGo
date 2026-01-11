@@ -8,8 +8,8 @@ A modern Tamagotchi-style virtual pet management application with real-time inte
 
 ## Deployment Links
 
-- **Frontend (Render):** [https://tamago-frontend.onrender.com](https://tamago-frontend.onrender.com)
-- **Backend API (Render):** [https://tamago-backend.onrender.com](https://tamago-backend.onrender.com)
+- **Frontend (Render):** [https://tamago.onrender.com](https://tamago-hgwj.onrender.com)
+- **Backend API (Render):** [https://tamago.onrender.com](https://tamago-hgwj.onrender.com)
 - **GitHub Repository:** [https://github.com/Alexhungerbuhler/TamaGo](https://github.com/Alexhungerbuhler/TamaGo)
 
 ## Table of Contents
@@ -134,27 +134,16 @@ VITE_WS_URL=http://localhost:3000
 
 ## Deployment
 
-### Backend Deployment (Render)
+### Deployment (Render)
 
 1. Push your code to GitHub
 2. Create a new Web Service on [Render](https://render.com)
 3. Connect your GitHub repository
 4. Configure the service:
-   - **Build Command:** `cd backend && npm install`
-   - **Start Command:** `cd backend && npm start`
-5. Add environment variables: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`
-
-### Frontend Deployment (Render)
-
-1. Create a new Static Site on [Render](https://render.com)
-2. Connect your GitHub repository
-3. Configure the service:
-   - **Build Command:** `cd frontend && npm install && npm run build`
-   - **Publish Directory:** `frontend/dist`
-4. Add environment variables: `VITE_API_BASE_URL`, `VITE_WS_URL`
-
-> **Note:** Free tier on Render may cause cold starts (30-60 seconds for first request).
-
+   - **Build Command:** `cd frontend && npm install && npm run build && cd ../backend && npm install`
+   - **Start Command:** `node backend/src/app.js`
+5. Add environment variables: `BACKEND_PORT, DATABASE_URL, SECRET_KEY, VITE_API_BASE_URL, VITE_WS_HOST, VITE_WS_PORT`
+   
 ## Features
 
 - **User Authentication** - Register, login with JWT
@@ -191,7 +180,7 @@ This API allows you to work with the following resources:
 
 ## Course Requirements
 
-This project fulfills all ArchiOWeb REST API requirements:
+This project REST API requirements:
 
 | Requirement | Implementation |
 |-------------|----------------|

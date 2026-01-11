@@ -51,6 +51,8 @@ export function initializeWebSocket(httpServer) {
 
   io.on('connection', (socket) => {
     console.log(`✅ User connected: ${socket.userName} (${socket.userId})`);
+    console.log(`🔌 Socket ID: ${socket.id}`);
+    console.log(`📡 Socket connected clients: ${io.engine.clientsCount}`);
     
     // Stocker l'utilisateur connecté
     connectedUsers.set(socket.userId, {
@@ -70,9 +72,11 @@ export function initializeWebSocket(httpServer) {
         location: u.location
       }));
 
+    console.log(`📊 Envoi users:existing au socket ${socket.id}: ${existingUsers.length} utilisateurs`);
     socket.emit('users:existing', { users: existingUsers });
 
     // Notifier tous les clients qu'un utilisateur est en ligne
+    console.log(`🟢 Broadcast user:online à tous les clients (${io.engine.clientsCount} connectés)`);
     io.emit('user:online', {
       userId: socket.userId,
       userName: socket.userName

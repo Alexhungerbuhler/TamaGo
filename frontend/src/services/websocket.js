@@ -22,7 +22,6 @@ class WebSocketService {
     // Déterminer l'URL du WebSocket
     if (!WS_URL) {
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       
       // Si on est en dev local, rester sur localhost:3000
@@ -30,18 +29,16 @@ class WebSocketService {
         WS_URL = 'http://localhost:3000';
       } else {
         // En production sur Render
-        // Utiliser le port spécifié en environnement (443 par défaut pour HTTPS)
+        // Même domaine que le frontend, mais port 443 pour les WebSocket
         const wsPort = import.meta.env.VITE_WS_PORT || '443';
-        const hostname = host.split(':')[0]; // Enlever le port si présent
         
-        // Si le port est 443, le domain suffit (c'est le port HTTPS par défaut)
         if (wsPort === '443') {
-          WS_URL = `${protocol}//${hostname}`;
+          WS_URL = `${protocol}//${host}`;
         } else {
-          WS_URL = `${protocol}//${hostname}:${wsPort}`;
+          WS_URL = `${protocol}//${host.split(':')[0]}:${wsPort}`;
         }
         
-        console.log('🎯 Render environment detected, using WS_URL:', WS_URL, 'WS Port:', wsPort);
+        console.log('🎯 Render environment detected, WS_URL:', WS_URL, 'WS Port:', wsPort);
       }
     }
 

@@ -1456,13 +1456,20 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  max-width: 600px;
+  max-width: 400px;
   margin: 0 auto;
   padding: 20px;
 }
 
+@media (min-width: 768px) {
+  .simonGrid {
+    max-width: 600px;
+  }
+}
+
 .simonTamagotchi {
-  aspect-ratio: 1;
+  aspect-ratio: 1 / 1;
+  width: 100%;
   background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
   border: 3px solid #000;
   border-radius: 12px;
@@ -1472,6 +1479,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   transition: all 0.3s;
   position: relative;
+  box-sizing: border-box;
 }
 
 .simonTamagotchi img {
@@ -1645,15 +1653,18 @@ onBeforeUnmount(() => {
   
   .simonGrid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 10px;
     padding: 10px;
+    max-width: 350px;
   }
 }
 
 @media (max-width: 480px) {
   .simonGrid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: 8px;
+    padding: 8px;
+    max-width: 310px;
   }
   
   .simonTamagotchi {

@@ -3,7 +3,7 @@
 A modern Tamagotchi-style virtual pet management application with real-time interactions, built with Vue.js and Express.
 
 **Project:** TamaGo - Virtual Pet Management System  
-**Course:** ArchiOWeb - HESSO  
+**Courses:** ArchiOWeb & DevMobil - HESSO  
 **Year:** 2026
 
 ## Deployment Links

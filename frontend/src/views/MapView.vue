@@ -87,10 +87,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useNearbyPets, useOnlineUsers } from '../composables/useWebSocket';
 import { useRouter } from 'vue-router';
 
-console.log('📍 MapView.vue script starting...');
-
 const router = useRouter();
-console.log('📍 Router imported');
 
 const {
   currentLocation,
@@ -99,35 +96,28 @@ const {
   startWatchingLocation,
   stopWatchingLocation
 } = useNearbyPets();
-console.log('📍 useNearbyPets imported successfully');
 
 const { getOnlineUsersList } = useOnlineUsers();
-console.log('📍 useOnlineUsers imported successfully');
 
 const selectedUser = ref(null);
 const showPermissionModal = ref(true);
-console.log('📍 Refs created');
 
 function requestLocationPermission() {
-  console.log('📍 requestLocationPermission called');
   showPermissionModal.value = false;
   startWatchingLocation(1000);
 }
 
 function rejectLocationPermission() {
-  console.log('📍 rejectLocationPermission called');
   showPermissionModal.value = false;
   router.push('/tamago');
 }
 
 function startTracking() {
-  console.log('📍 startTracking called');
   showPermissionModal.value = false;
   startWatchingLocation(1000);
 }
 
 function goBack() {
-  console.log('📍 goBack called');
   stopWatchingLocation();
   router.push('/tamago');
 }
@@ -148,13 +138,11 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 function getUsersWithDistance() {
-  console.log('📍 getUsersWithDistance called, currentLocation:', currentLocation.value);
   if (!currentLocation.value) {
     return [];
   }
 
   const users = getOnlineUsersList();
-  console.log('📍 Online users:', users.length);
 
   return users
     .map(user => ({
@@ -170,16 +158,12 @@ function getUsersWithDistance() {
 }
 
 onMounted(() => {
-  console.log('📍 MapView mounted - waiting for location permission');
   showPermissionModal.value = true;
 });
 
 onUnmounted(() => {
-  console.log('📍 MapView unmounted');
   stopWatchingLocation();
 });
-
-console.log('📍 MapView.vue script loaded successfully');
 
 </script>
 

@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
-import app from "../src/app.js";
-import User from "../src/models/User.js";
-import Tamagotchi from "../src/models/Tamagotchi.js";
+import app from "../app.js";
+import User from "../models/User.js";
+import Tamagotchi from "../models/Tamagotchi.js";
 
 let testUser;
 let authToken;
@@ -12,7 +12,11 @@ let testPetId;
 // Connexion à la base de données de test
 beforeAll(async () => {
   const testDbUrl = process.env.TEST_DATABASE_URL || "mongodb://localhost/tama-go-test";
-  await mongoose.connect(testDbUrl);
+  
+  // Si mongoose est déjà connecté, utiliser la connexion existante
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(testDbUrl);
+  }
   
   // Nettoyer la base de données
   await User.deleteMany({});

@@ -8,8 +8,7 @@ A modern Tamagotchi-style virtual pet management application with real-time inte
 
 ## Deployment Links
 
-- **Frontend (Render):** [https://tamago.onrender.com](https://tamago-hgwj.onrender.com)
-- **Backend API (Render):** [https://tamago.onrender.com](https://tamago-hgwj.onrender.com)
+- **Render:** [https://tamago.onrender.com](https://tamago-hgwj.onrender.com)
 - **GitHub Repository:** [https://github.com/Alexhungerbuhler/TamaGo](https://github.com/Alexhungerbuhler/TamaGo)
 
 ## Table of Contents
@@ -96,7 +95,7 @@ Create `.env` files in both `backend/` and `frontend/` directories:
 **Backend (.env):**
 
 ```env
-PORT=3000
+BACKEND_PORT=3000
 MONGODB_URI=mongodb://localhost:27017/tamago
 JWT_SECRET=your-secret-key-change-this-in-production
 NODE_ENV=development

@@ -103,7 +103,7 @@ const showPermissionModal = ref(true);
 
 function requestLocationPermission() {
   showPermissionModal.value = false;
-  startTracking();
+  startWatchingLocation(1000);
 }
 
 function rejectLocationPermission() {
@@ -158,6 +158,7 @@ function getUsersWithDistance() {
 
 onMounted(() => {
   showPermissionModal.value = true;
+  console.log('📍 MapView mounted - waiting for location permission');
 });
 
 onUnmounted(() => {

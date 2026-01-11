@@ -1441,7 +1441,7 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 20px;
+  padding: 36px;
 }
 
 @media (min-width: 768px) {

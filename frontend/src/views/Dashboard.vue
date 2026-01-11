@@ -139,7 +139,7 @@ async function logout() {
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  padding: 2rem 1rem;
+  padding: 0 1rem;
   overflow: hidden;
   box-sizing: border-box;
 }

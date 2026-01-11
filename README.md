@@ -2,27 +2,36 @@
 
 A modern Tamagotchi-style virtual pet management application with real-time interactions, built with Vue.js and Express.
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Project:** TamaGo - Virtual Pet Management System  
+**Course:** ArchiOWeb - HESSO  
+**Year:** 2026
 
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Features](#features)
-- [API Resources](#api-resources)
-- [Project Structure](#project-structure)
-- [WebSocket Support](#websocket-support)
-- [Technologies](#technologies)
-- [Documentation](#documentation)
+## Deployment Links
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+- **Frontend (Render):** [https://tamago-frontend.onrender.com](https://tamago-frontend.onrender.com)
+- **Backend API (Render):** [https://tamago-backend.onrender.com](https://tamago-backend.onrender.com)
+- **GitHub Repository:** [https://github.com/Alexhungerbuhler/TamaGo](https://github.com/Alexhungerbuhler/TamaGo)
+
+## Table of Contents
+
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Configuration](#-configuration)
+- [Deployment](#-deployment)
+- [Features](#-features)
+- [API & Documentation](#-api--documentation)
+- [Course Requirements](#-course-requirements)
+- [Testing](#-testing)
+- [WebSocket Support](#-websocket-support)
+- [Technologies](#-technologies)
+- [Team](#-team)
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 25.x or higher
-- [MongoDB](https://www.mongodb.com) 8.x
-- [npm](https://www.npmjs.com) 10.x
+- **Node.js** ≥ 25.x ([Download](https://nodejs.org))
+- **npm** ≥ 10.x (included with Node.js)
+- **MongoDB** ≥ 8.x ([Installation Guide](https://docs.mongodb.com/manual/installation/))
 
 ## Installation
 
@@ -42,52 +51,49 @@ npm install
 
 ## Usage
 
-### Start Backend
+### Development
 
 ```bash
+# Terminal 1 - Backend (API + WebSocket)
 cd backend
 npm start
-```
 
-The API will be available at [http://localhost:3000](http://localhost:3000).
-
-### Start Frontend
-
-```bash
+# Terminal 2 - Frontend (Vite dev server)
 cd frontend
 npm run dev
 ```
 
-The application will be available at [http://localhost:5173](http://localhost:5173).
+**Access the application:**
+- Frontend: [http://localhost:5173](http://localhost:5173)
+- Backend API: [http://localhost:3000](http://localhost:3000)
 
-### Other Scripts
+### Production
 
-**Backend:**
 ```bash
-# Run backend tests
-npm test
-
-# Check MongoDB indexes
-npm run check-indexes
-
-# Create MongoDB indexes
-npm run create-indexes
-```
-
-**Frontend:**
-```bash
-# Build for production
+# Build frontend
+cd frontend
 npm run build
 
-# Preview production build
-npm run preview
+# Start backend
+cd ../backend
+npm start
 ```
+
+### Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm start` (backend) | Start the backend server |
+| `npm test` (backend) | Run automated tests |
+| `npm run dev` (frontend) | Start Vite dev server |
+| `npm run build` (frontend) | Build for production |
+| `npm run preview` (frontend) | Preview production build |
 
 ## Configuration
 
-### Backend Configuration
+Create `.env` files in both `backend/` and `frontend/` directories:
 
-Create a `.env` file in the `backend/` directory:
+**Backend (.env):**
 
 ```env
 PORT=3000
@@ -97,33 +103,57 @@ NODE_ENV=development
 UPLOAD_DIR=uploads
 ```
 
-### Frontend Configuration
-
-Create a `.env` file in the `frontend/` directory:
+**Frontend (.env):**
 
 ```env
 VITE_API_BASE_URL=http://localhost:3000/api
 VITE_WS_URL=http://localhost:3000
 ```
 
-### Environment Variables
+<details>
+<summary><strong>Environment Variables Reference</strong></summary>
 
-**Backend:**
+**Backend Variables:**
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | Server port | `3000` |
-| `MONGODB_URI` | MongoDB connection URL | `mongodb://localhost:27017/tamago` |
-| `JWT_SECRET` | Secret key for JWT tokens | (required) |
-| `NODE_ENV` | Environment mode | `development` |
-| `UPLOAD_DIR` | Directory for uploaded images | `uploads` |
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `PORT` | Server port | `3000` | No |
+| `MONGODB_URI` | MongoDB connection URL | `mongodb://localhost:27017/tamago` | ✅ |
+| `JWT_SECRET` | Secret key for JWT tokens | - | ✅ |
+| `NODE_ENV` | Environment mode | `development` | No |
+| `UPLOAD_DIR` | Directory for uploaded images | `uploads` | No |
 
-**Frontend:**
+**Frontend Variables:**
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:3000/api` |
-| `VITE_WS_URL` | WebSocket server URL | `http://localhost:3000` |
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `VITE_API_BASE_URL` | Backend API URL | `http://localhost:3000/api` | ✅ |
+| `VITE_WS_URL` | WebSocket server URL | `http://localhost:3000` | ✅ |
+
+</details>
+
+## Deployment
+
+### Backend Deployment (Render)
+
+1. Push your code to GitHub
+2. Create a new Web Service on [Render](https://render.com)
+3. Connect your GitHub repository
+4. Configure the service:
+   - **Build Command:** `cd backend && npm install`
+   - **Start Command:** `cd backend && npm start`
+5. Add environment variables: `MONGODB_URI`, `JWT_SECRET`, `NODE_ENV=production`
+
+### Frontend Deployment (Render)
+
+1. Create a new Static Site on [Render](https://render.com)
+2. Connect your GitHub repository
+3. Configure the service:
+   - **Build Command:** `cd frontend && npm install && npm run build`
+   - **Publish Directory:** `frontend/dist`
+4. Add environment variables: `VITE_API_BASE_URL`, `VITE_WS_URL`
+
+> **Note:** Free tier on Render may cause cold starts (30-60 seconds for first request).
 
 ## Features
 
@@ -141,95 +171,90 @@ VITE_WS_URL=http://localhost:3000
 
 This API allows you to work with the following resources:
 
-### Authentication
+| Resource | Description | Endpoints |
+|----------|-------------|-----------|
+| **Auth** | User registration and authentication | `POST /api/auth/register`, `POST /api/auth/login` |
+| **Pets** | Tamagotchi management (CRUD) | `GET /api/pets`, `GET /api/pets/:id`, `POST /api/pets`, `PATCH /api/pets/:id`, `DELETE /api/pets/:id` |
+| **Actions** | Pet interactions (feed, play, toilet, sleep) | `POST /api/pets/:id/feed`, `POST /api/pets/:id/play`, `POST /api/pets/:id/toilet`, `POST /api/pets/:id/sleep` |
+| **Images** | Upload and manage pet images | `POST /api/pets/:id/image`, `DELETE /api/pets/:id/image` |
+| **Stats** | Global statistics (aggregation pipeline) | `GET /api/stats` |
+| **World** | Geolocation data for pets | `GET /api/world` |
 
-- **Register** - `POST /api/auth/register`
-  - Create a new user account
-  - Required fields: username, email, password
+### Key API Features
 
-- **Login** - `POST /api/auth/login`
-  - Authenticate and receive JWT token
-  - Required fields: email, password
+- **Authentication:** JWT-based authentication for secure access
+- **Authorization:** Owner-only operations (update, delete, actions, images)
+- **Pagination:** `GET /api/pets` supports `page` and `limit` query parameters
+- **Filtering:** Filter pets by `species` and `inclination`
+- **Validation:** Comprehensive input validation with appropriate error responses
+- **Geolocation:** Pets store location as GeoJSON Point coordinates
 
-### Pets (Tamagotchis)
+## Course Requirements
 
-- **List Pets** - `GET /api/pets`
-  - Browse pets with filtering and pagination
-  - Query params: `species`, `inclination`, `page`, `limit`
+This project fulfills all ArchiOWeb REST API requirements:
 
-- **Create Pet** - `POST /api/pets` (authenticated)
-  - Create a new Tamagotchi
-  - Required fields: name, species, inclination
+| Requirement | Implementation |
+|-------------|----------------|
+| **User Management** | Registration and JWT-based authentication |
+| **Linked Resources** | Pets (linked to Users), Statistics (aggregated from Pets/Users) |
+| **Pagination** | `GET /api/pets` with `page` and `limit` parameters |
+| **Filtering** | `GET /api/pets` with `species` and `inclination` filters |
+| **Aggregation** | `GET /api/stats` uses MongoDB aggregation pipeline |
+| **Geolocation** | Pets store GeoJSON Point coordinates |
+| **Images** | Upload/delete pet images via multipart/form-data |
+| **Authorization** | Owner-only operations (JWT + ownership validation) |
+| **Real-time** | WebSocket notifications via Socket.io |
+| **Tests** | 10+ automated tests covering 4+ REST operations |
+| **Deployment** | Backend on Render, source on GitHub |
 
-- **Get Pet Details** - `GET /api/pets/:id`
-  - Retrieve detailed information about a specific pet
+## Testing
 
-- **Update Pet** - `PATCH /api/pets/:id` (authenticated)
-  - Update pet information (name, species, inclination)
-  - Owner only
+```bash
+cd backend
+npm test
+```
 
-- **Delete Pet** - `DELETE /api/pets/:id` (authenticated)
-  - Remove a pet permanently
-  - Owner only
-
-### Pet Actions
-
-- **Feed** - `POST /api/pets/:id/feed` (authenticated)
-- **Play** - `POST /api/pets/:id/play` (authenticated)
-- **Toilet** - `POST /api/pets/:id/toilet` (authenticated)
-- **Sleep** - `POST /api/pets/:id/sleep` (authenticated)
-
-### Pet Images
-
-- **Upload Image** - `POST /api/pets/:id/image` (authenticated)
-  - Upload a pet image
-  - Owner only
-
-- **Delete Image** - `DELETE /api/pets/:id/image` (authenticated)
-  - Remove pet image
-  - Owner only
-
-### Statistics
-
-- **Global Stats** - `GET /api/stats`
-  - Retrieve global statistics (total users, pets, average stats)
-
-### World
-
-- **World Data** - `GET /api/world`
-  - Get geolocation data for pets (in development)
+The test suite includes **10+ reproducible tests** covering:
+- User registration and authentication
+- Pet CRUD operations
+- Authorization (owner-only operations)
+- Pagination and filtering
+- Input validation
 
 ## WebSocket Support
 
 This application uses [Socket.io](https://socket.io/) for real-time communication.
 
-### Supported Events
+**Supported Events:**
 
-**Server → Client:**
-- `petStatsUpdated` - Pet statistics have changed
-- `notification` - New notification for the user
-- `petCreated` - New pet created
-- `petDeleted` - Pet removed
-
-**Client → Server:**
-- `authenticate` - Authenticate WebSocket connection with JWT
+- **Server → Client:** `petStatsUpdated`, `notification`, `petCreated`, `petDeleted`
+- **Client → Server:** `authenticate` (JWT authentication)
 
 Real-time updates are displayed in the NotificationsPanel component.
 
-## Documentation
+## Technologies
 
-Additional documentation available in the repository:
+### Backend
+- **Express.js** - Web framework
+- **MongoDB** + **Mongoose** - Database and ODM
+- **JWT** - Authentication
+- **Socket.io** - Real-time WebSocket communication
+- **Multer** - File upload handling
+- **bcrypt** - Password hashing
 
-- [Installation Guide](INSTALLATION_COMPLETE.md)
-- [Store & Auth Guide](GUIDE_STORE_AUTH.md)
-- [API Testing Guide](GUIDE_TEST_API.md)
-- [Router Guards Guide](ROUTER_GUARDS_TEST.md)
-- [WebSocket Guide](WEBSOCKET_GUIDE.md)
-- [Validation Guide](VALIDATION_GUIDE.md)
-- [Service API Setup](SERVICE_API_SETUP.md)
+### Frontend
+- **Vue.js 3** - JavaScript framework
+- **Vue Router** - Client-side routing
+- **Pinia** - State management
+- **Vite** - Build tool
+- **Zod** + **VeeValidate** - Form validation
 
----
+## Team
 
-**Project:** TamaGo - Virtual Pet Management System  
-**Course:** ArchiOWeb - HESSO  
-**Year:** 2026
+Projet réalisé dans le cadre des cours **ArchiOWeb** et **DevMob** à la HEIG-VD.
+
+**Développement:**
+- Joshua
+- Cédric
+- Alexandre
+

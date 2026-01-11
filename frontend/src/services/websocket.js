@@ -16,24 +16,35 @@ class WebSocketService {
       return;
     }
 
-    // Déterminer l'URL du serveur
     let WS_URL = import.meta.env.VITE_API_BASE_URL;
     
-    // Si pas configuré, utiliser l'URL du domaine actuel
+    // Déterminer l'URL du WebSocket
     if (!WS_URL) {
       const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       
       // Si on est en dev local, rester sur localhost:3000
       if (host.includes('localhost')) {
         WS_URL = 'http://localhost:3000';
       } else {
-        // En production sur Render, inférer l'URL du backend
-        // Par exemple: tamago-frontend.onrender.com -> tamago-backend.onrender.com
-        // Ou garder le même domaine si c'est un proxy
-        WS_URL = `${protocol}//${host}`;
+        // En production sur Render
+        // Utiliser le port spécifié en environnement (443 par défaut pour HTTPS)
+        const wsPort = import.meta.env.VITE_WS_PORT || '443';
+        const hostname = host.split(':')[0]; // Enlever le port si présent
+        
+        // Si le port est 443, le domain suffit (c'est le port HTTPS par défaut)
+        if (wsPort === '443') {
+          WS_URL = `${protocol}//${hostname}`;
+        } else {
+          WS_URL = `${protocol}//${hostname}:${wsPort}`;
+        }
+        
+        console.log('🎯 Render environment detected, using WS_URL:', WS_URL, 'WS Port:', wsPort);
       }
     }
+
+    console.log('📡 Connecting to WebSocket:', WS_URL);
 
     this.socket = io(WS_URL, {
       auth: {

@@ -299,6 +299,30 @@
         </button>
       </div>
     </div>
+
+    <!-- Modal d'alerte d'énergie -->
+    <div v-if="showEnergyModal" :class="$style.modalOverlay" @click.self="showEnergyModal = false">
+      <div :class="$style.modalContainer">
+        <div :class="$style.modalContent">
+          <h2 :class="$style.modalTitle">
+            <img src="/icons/TriangleWarningIcon.svg" :class="$style.titleWarningIcon" alt="warning">
+            Not Enough Energy!
+          </h2>
+          <p :class="$style.modalWarning">
+            Your Tamagotchi needs to rest. Energy will automatically recharge to 100% in 5 minutes after reaching 0.
+          </p>
+
+          <div :class="$style.modalButtons">
+            <button 
+              :class="$style.btnCancel"
+              @click="showEnergyModal = false"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -313,6 +337,7 @@ const petsStore = usePetsStore();
 // ========== GÉNÉRAL ==========
 const currentPet = computed(() => petsStore.currentPet || (petsStore.petsList.length > 0 ? petsStore.petsList[0] : null));
 const selectedGame = ref(null);
+const showEnergyModal = ref(false);
 
 const tamagotchis = [
   { id: 1, name: 'Buisson', image: '/Pets/buisson 1.png' },
@@ -341,7 +366,7 @@ const initMemory = async () => {
   }
   
   if (currentPet.value.energy < 25) {
-    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
+    showEnergyModal.value = true;
     return;
   }
   
@@ -467,7 +492,7 @@ const startCatchGame = async () => {
   }
   
   if (currentPet.value.energy < 25) {
-    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
+    showEnergyModal.value = true;
     return;
   }
   
@@ -668,7 +693,7 @@ const startSimonGame = async () => {
   }
   
   if (currentPet.value.energy < 25) {
-    alert('⚠️ Not enough energy! Your Tamagotchi needs at least 25 energy to play.\nLet it rest!');
+    showEnergyModal.value = true;
     return;
   }
   
@@ -1527,5 +1552,113 @@ onBeforeUnmount(() => {
   .simonTamagotchi {
     padding: 12px;
   }
+}
+
+/* ========== MODAL STYLES ========== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContainer {
+  width: 90%;
+  max-width: 450px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: #ffffff;
+  padding: 2rem;
+  border: 5px solid #000000;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  font-family: 'Pixelify Sans', monospace;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin: 0 0 1.5rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.titleWarningIcon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.modalWarning {
+  margin: 0 0 2rem;
+  font-size: 1rem;
+  color: #D5230C;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btnCancel {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border: 4px solid #000000;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: 'Pixelify Sans', monospace;
+  transition: all 0.2s;
+  background: #627DE0;
+  color: #ffffff;
+}
+
+.btnCancel:hover {
+  background: #5169c7;
+  transform: translateY(-2px);
+}
+
+.btnCancel:active {
+  transform: translateY(0);
 }
 </style>

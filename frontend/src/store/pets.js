@@ -22,6 +22,10 @@ export const usePetsStore = defineStore('pets', () => {
   // WebSocket listeners
   let unsubscribeUpdate;
 
+  // Timer for automatic energy recharge
+  let energyRechargeTimer = null;
+  const ENERGY_RECHARGE_DELAY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
   // Initialiser les écouteurs WebSocket
   function initWebSocketListeners() {
     // Mise à jour des stats d'un pet
@@ -33,6 +37,11 @@ export const usePetsStore = defineStore('pets', () => {
   // Nettoyer les écouteurs
   function cleanupWebSocketListeners() {
     if (unsubscribeUpdate) unsubscribeUpdate();
+    // Nettoyer aussi le timer d'énergie
+    if (energyRechargeTimer) {
+      clearTimeout(energyRechargeTimer);
+      energyRechargeTimer = null;
+    }
   }
 
   // Mettre à jour les stats d'un pet
@@ -52,7 +61,40 @@ export const usePetsStore = defineStore('pets', () => {
         ...currentPet.value,
         ...stats
       };
+      
+      // Démarrer le timer de recharge si l'énergie est à 0
+      if (stats.energy !== undefined && stats.energy === 0) {
+        startEnergyRecharge(petId);
+      }
+      // Annuler le timer si l'énergie n'est plus à 0
+      if (stats.energy !== undefined && stats.energy > 0 && energyRechargeTimer) {
+        clearTimeout(energyRechargeTimer);
+        energyRechargeTimer = null;
+      }
     }
+  }
+
+  // Démarrer le timer de recharge automatique d'énergie
+  function startEnergyRecharge(petId) {
+    // Annuler tout timer existant
+    if (energyRechargeTimer) {
+      clearTimeout(energyRechargeTimer);
+    }
+    
+    console.log(`⏰ Energy recharge timer started for pet ${petId}. Will recharge to 100% in 5 minutes.`);
+    
+    // Programmer la recharge dans 5 minutes
+    energyRechargeTimer = setTimeout(async () => {
+      try {
+        console.log(`⚡ Recharging energy to 100% for pet ${petId}`);
+        await updatePet(petId, { energy: 100 });
+        await fetchPet(petId);
+        console.log('✅ Energy recharged to 100%!');
+        energyRechargeTimer = null;
+      } catch (error) {
+        console.error('❌ Error recharging energy:', error);
+      }
+    }, ENERGY_RECHARGE_DELAY);
   }
 
   // Getters
@@ -132,6 +174,12 @@ export const usePetsStore = defineStore('pets', () => {
         pets.value[index] = { ...response.data };
       }
       
+      // Vérifier si l'énergie est à 0 pour démarrer le timer de recharge
+      // (utile quand on charge un pet qui était déjà à 0)
+      if (currentPet.value.energy === 0 && !energyRechargeTimer) {
+        startEnergyRecharge(id);
+      }
+      
       return currentPet.value;
     } catch (err) {
       error.value = err.message || 'Erreur lors du chargement du pet';
@@ -177,6 +225,16 @@ export const usePetsStore = defineStore('pets', () => {
       
       // Mettre à jour dans la liste
       await updatePetInList(id, updatedPet);
+      
+      // Vérifier si l'énergie est à 0 pour démarrer le timer de recharge
+      if (updatedPet.energy === 0 && (currentPet.value?._id === id || currentPet.value?.id === id)) {
+        startEnergyRecharge(id);
+      }
+      // Annuler le timer si l'énergie n'est plus à 0
+      if (updatedPet.energy > 0 && energyRechargeTimer) {
+        clearTimeout(energyRechargeTimer);
+        energyRechargeTimer = null;
+      }
       
       return updatedPet;
     } catch (err) {

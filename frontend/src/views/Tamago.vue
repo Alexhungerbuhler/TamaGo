@@ -609,10 +609,9 @@ const handleUse = async () => {
           console.log('Fun can only increase by playing games!');
           return; // Sortir sans action
         case 'energy':
-          console.log('Executing energy action');
-          result = await petsStore.sleepPet(petId);
-          console.log('Sleep result:', result);
-          break;
+          // Energy se recharge automatiquement après 5 minutes
+          console.log('Energy recharges automatically after 5 minutes!');
+          return; // Sortir sans action
       }
       
       // Refresh pet data to update gauges

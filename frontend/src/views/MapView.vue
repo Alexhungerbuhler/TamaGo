@@ -3,7 +3,6 @@
     <!-- Permission Modal -->
     <div v-if="showPermissionModal" class="permission-modal-overlay">
       <div class="permission-modal">
-        <div class="modal-icon">📍</div>
         <h2>Location Access</h2>
         <p>TamaGo needs your location to find nearby users.</p>
         <div class="modal-actions">
@@ -21,9 +20,9 @@
       <button class="btn-back" @click="goBack">
         <img src="/icons/ArrowDirectionIBackcon.svg" alt="Back" class="back-icon" />
       </button>
-      <h1>👥 Users Nearby</h1>
+      <h1>Users Nearby</h1>
       <div v-if="currentLocation" class="location-badge">
-        📍 {{ currentLocation.latitude.toFixed(4) }}, {{ currentLocation.longitude.toFixed(4) }}
+        {{ currentLocation.latitude.toFixed(4) }}, {{ currentLocation.longitude.toFixed(4) }}
       </div>
     </div>
 
@@ -33,7 +32,7 @@
       <!-- Users List -->
       <div class="users-container">
         <h2 v-if="getOnlineUsersList().length === 0" class="no-users">
-          🌐 No users nearby
+          No users nearby
         </h2>
         
         <div v-else class="users-list">
@@ -43,24 +42,24 @@
             class="user-card"
             @click="selectedUser = user"
           >
-            <div class="user-avatar">👤</div>
+            <div class="user-avatar"></div>
             <div class="user-info">
               <h3>{{ user.name }}</h3>
               <p class="distance">
-                📏 {{ user.distance.toFixed(2) }} m away
+                {{ user.distance.toFixed(2) }} m away
               </p>
               <p class="coords">
                 {{ user.location.coordinates[1].toFixed(4) }}, {{ user.location.coordinates[0].toFixed(4) }}
               </p>
             </div>
-            <div class="status-badge">🟢</div>
+            <div class="status-badge"></div>
           </div>
         </div>
       </div>
 
       <!-- Error -->
       <div v-if="locationError" class="error">
-        ❌ {{ locationError }}
+        {{ locationError }}
       </div>
     </div>
 
@@ -69,13 +68,13 @@
       <div class="modal-content" @click.stop>
         <h3>{{ selectedUser.name }}</h3>
         <p class="location-detail">
-          📍 {{ selectedUser.location.coordinates[1].toFixed(6) }}, 
+          {{ selectedUser.location.coordinates[1].toFixed(6) }}, 
           {{ selectedUser.location.coordinates[0].toFixed(6) }}
         </p>
         <p v-if="selectedUser.distance" class="distance-detail">
-          📏 {{ selectedUser.distance.toFixed(2) }} m away
+          {{ selectedUser.distance.toFixed(2) }} m away
         </p>
-        <p class="online-status">🟢 Online</p>
+        <p class="online-status">Online</p>
         <button @click="selectedUser = null" class="btn-close">Close</button>
       </div>
     </div>

@@ -32,7 +32,7 @@ function onLoginSuccess() {
   top: 0;
   left: 0;
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   width: 100%;
   display: flex;
   align-items: center;

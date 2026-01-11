@@ -934,7 +934,7 @@ onBeforeUnmount(() => {
 .gamesPage {
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   position: fixed;
   top: 0;
   left: 0;
@@ -1308,13 +1308,19 @@ onBeforeUnmount(() => {
   z-index: 1;
   width: 100%;
   max-width: 600px;
-  height: 600px;
+  height: 400px;
   margin: 20px auto 0;
   background: linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%);
   border: 4px solid #000;
   border-radius: 16px;
   overflow: hidden;
   touch-action: none;
+}
+
+@media (min-width: 768px) {
+  .catchGameArea {
+    height: 600px;
+  }
 }
 
 .fallingItem {
@@ -1351,27 +1357,39 @@ onBeforeUnmount(() => {
 }
 
 .arrowControls {
-  position: fixed;
-  bottom: 80px;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 120px;
+  gap: 80px;
   padding: 20px;
+  margin-top: 20px;
+}
+
+@media (min-width: 768px) {
+  .arrowControls {
+    gap: 120px;
+  }
 }
 
 .arrowLeft,
 .arrowRight {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
   -webkit-user-select: none;
   filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+@media (min-width: 768px) {
+  .arrowLeft,
+  .arrowRight {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 .arrowLeft:hover,
@@ -1423,15 +1441,27 @@ onBeforeUnmount(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 20px;
+  padding: 20px 10px;
+}
+
+@media (min-width: 768px) {
+  .simonGameArea {
+    padding: 40px 20px;
+  }
 }
 
 .simonGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 12px;
   max-width: 500px;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .simonGrid {
+    gap: 20px;
+  }
 }
 
 .simonTamagotchi {
@@ -1439,12 +1469,18 @@ onBeforeUnmount(() => {
   background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
   border: 4px solid #000;
   border-radius: 20px;
-  padding: 20px;
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
   position: relative;
+}
+
+@media (min-width: 768px) {
+  .simonTamagotchi {
+    padding: 20px;
+  }
 }
 
 .simonTamagotchi img {

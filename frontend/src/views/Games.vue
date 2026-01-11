@@ -1451,39 +1451,27 @@ onBeforeUnmount(() => {
 }
 
 .simonGrid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  max-width: 320px;
-  width: 90%;
-}
-
-@media (min-width: 768px) {
-  .simonGrid {
-    gap: 20px;
-    max-width: 500px;
-  }
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .simonTamagotchi {
   aspect-ratio: 1;
   background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
   border: 3px solid #000;
-  border-radius: 16px;
-  padding: 8px;
+  border-radius: 12px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
   position: relative;
-}
-
-@media (min-width: 768px) {
-  .simonTamagotchi {
-    border: 4px solid #000;
-    border-radius: 20px;
-    padding: 20px;
-  }
 }
 
 .simonTamagotchi img {
@@ -1656,11 +1644,20 @@ onBeforeUnmount(() => {
   }
   
   .simonGrid {
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .simonGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
   }
   
   .simonTamagotchi {
-    padding: 12px;
+    border-width: 2px;
   }
 }
 

@@ -942,6 +942,9 @@ onBeforeUnmount(() => {
   padding: 20px;
   font-family: 'Pixelify Sans', sans-serif;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-sizing: border-box;
 }
 
@@ -1314,7 +1317,7 @@ onBeforeUnmount(() => {
   border: 4px solid #000;
   border-radius: 16px;
   overflow: hidden;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
 }
 
 @media (min-width: 768px) {

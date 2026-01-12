@@ -291,6 +291,9 @@ onMounted(async () => {
   padding: 2rem 1rem 3rem;
   font-family: 'Pixelify Sans', monospace;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-sizing: border-box;
 }
 

@@ -281,10 +281,17 @@ onMounted(async () => {
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap');
 
 .profile-page {
-  min-height: 100vh;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  position: fixed;
+  top: 0;
+  left: 0;
   background: linear-gradient(135deg, #c0fe90 0%, #a8e678 100%);
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 3rem;
   font-family: 'Pixelify Sans', monospace;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .profile-container {
